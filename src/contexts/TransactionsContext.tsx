@@ -37,11 +37,7 @@ export const useTransactions = () => {
 
 // Proveedor del contexto
 export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [transactions, setTransactions] = useState<Transaction[]>([
-    // Datos de ejemplo iniciales
-    { id: 1, description: 'Farmacia', amount: -10.00, category: 'Salud', date: '2023-06-15', type: 'Gasto' },
-    { id: 2, description: 'Internet', amount: -20.00, category: 'Casa', date: '2023-06-10', type: 'Gasto' },
-  ]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
 
   // Función para agregar una nueva transacción
   const addTransaction = (transaction: Omit<Transaction, 'id'>) => {

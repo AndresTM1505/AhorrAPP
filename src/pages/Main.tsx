@@ -16,7 +16,7 @@ const Main = () => {
   // Obtener los 3 movimientos más recientes
   const recentTransactions = transactions.slice(0, 3);
   
-  const handleDelete = (id) => {
+  const handleDelete = (id: number) => {
     deleteTransaction(id);
     toast({
       title: "Eliminado",
@@ -25,18 +25,24 @@ const Main = () => {
   };
   
   const openWhatsApp = () => {
-    // Formato del mensaje para WhatsApp
+    // Número específico para enviar mensaje
+    const phoneNumber = "+34603831258";
+    
+    // Formato del mensaje para WhatsApp de forma más interactiva
     const message = encodeURIComponent(
-      "Hola! Quiero registrar un nuevo movimiento con el siguiente formato:\n\n" +
-      "Monto: 50€\n" +
-      "Tipo: Gasto\n" +
-      "Categoría: Alimentos\n" +
-      "Descripción: Compra supermercado\n\n" +
-      "Por favor, modifica los valores según tu movimiento."
+      "🏦 *NUEVO MOVIMIENTO* 🏦\n\n" +
+      "Hola! Para registrar un nuevo movimiento, por favor completa los campos:\n\n" +
+      "💰 *Monto*: _escribe cantidad_\n" +
+      "📋 *Tipo*: _Ingreso/Gasto_\n" +
+      "🏷️ *Categoría*: _nombre de categoría_\n" +
+      "📝 *Descripción*: _breve descripción_\n" +
+      "📆 *Fecha*: _DD/MM/AAAA_\n\n" +
+      "Por favor, responde con toda la información completa. Una vez reciba tu mensaje, actualizaré la app con tu nuevo movimiento.\n\n" +
+      "¡Gracias por usar AhorroAPP! 💯"
     );
     
     // Abrir WhatsApp con el mensaje predefinido
-    window.open(`https://wa.me/?text=${message}`, '_blank');
+    window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
   };
 
   return (
@@ -123,11 +129,11 @@ const Main = () => {
                         {formatCurrency(transaction.amount)}
                       </span>
                       <Link to={`/transactions`}>
-                        <Button variant="ghost" size="icon">
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
                           <Edit className="h-4 w-4" />
                         </Button>
                       </Link>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(transaction.id)}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDelete(transaction.id)}>
                         <Trash className="h-4 w-4" />
                       </Button>
                     </div>
