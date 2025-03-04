@@ -16,6 +16,8 @@ export interface Transaction {
 interface TransactionsContextType {
   transactions: Transaction[];
   addTransaction: (transaction: Omit<Transaction, 'id'>) => void;
+  updateTransaction: (transaction: Transaction) => void;
+  deleteTransaction: (id: number) => void;
   balance: number;
   incomeTotal: number;
   expenseTotal: number;
@@ -58,6 +60,24 @@ export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ childr
     setTransactions(prev => [newTransaction, ...prev]);
   };
 
+  // Función para actualizar una transacción existente
+  const updateTransaction = (updatedTransaction: Transaction) => {
+    const updatedAmount = updatedTransaction.type === 'Ingreso' 
+      ? Math.abs(Number(updatedTransaction.amount)) 
+      : -Math.abs(Number(updatedTransaction.amount));
+    
+    setTransactions(prev => prev.map(t => 
+      t.id === updatedTransaction.id 
+        ? { ...updatedTransaction, amount: updatedAmount } 
+        : t
+    ));
+  };
+
+  // Función para eliminar una transacción
+  const deleteTransaction = (id: number) => {
+    setTransactions(prev => prev.filter(t => t.id !== id));
+  };
+
   // Calcular totales
   const balance = transactions.reduce((sum, transaction) => sum + transaction.amount, 0);
   const incomeTotal = transactions
@@ -71,6 +91,8 @@ export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ childr
   const value = {
     transactions,
     addTransaction,
+    updateTransaction,
+    deleteTransaction,
     balance,
     incomeTotal,
     expenseTotal

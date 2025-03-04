@@ -5,14 +5,39 @@ import { useTransactions } from '@/contexts/TransactionsContext';
 import SideMenu from '@/components/SideMenu';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CirclePlus, TrendingUp, TrendingDown, MessageCircleIcon } from 'lucide-react';
+import { CirclePlus, TrendingUp, TrendingDown, MessageCircleIcon, Edit, Trash } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 const Main = () => {
-  const { transactions, balance, incomeTotal, expenseTotal } = useTransactions();
+  const { transactions, balance, incomeTotal, expenseTotal, deleteTransaction } = useTransactions();
+  const { toast } = useToast();
   
   // Obtener los 3 movimientos más recientes
   const recentTransactions = transactions.slice(0, 3);
+  
+  const handleDelete = (id) => {
+    deleteTransaction(id);
+    toast({
+      title: "Eliminado",
+      description: "El movimiento ha sido eliminado correctamente."
+    });
+  };
+  
+  const openWhatsApp = () => {
+    // Formato del mensaje para WhatsApp
+    const message = encodeURIComponent(
+      "Hola! Quiero registrar un nuevo movimiento con el siguiente formato:\n\n" +
+      "Monto: 50€\n" +
+      "Tipo: Gasto\n" +
+      "Categoría: Alimentos\n" +
+      "Descripción: Compra supermercado\n\n" +
+      "Por favor, modifica los valores según tu movimiento."
+    );
+    
+    // Abrir WhatsApp con el mensaje predefinido
+    window.open(`https://wa.me/?text=${message}`, '_blank');
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -59,7 +84,10 @@ const Main = () => {
         </div>
         
         {/* WhatsApp Integration Button */}
-        <Button className="w-full flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600">
+        <Button 
+          className="w-full flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600"
+          onClick={openWhatsApp}
+        >
           <MessageCircleIcon className="h-5 w-5" />
           Registrar gastos desde WhatsApp
         </Button>
@@ -90,9 +118,19 @@ const Main = () => {
                         <p className="text-sm text-muted-foreground">{transaction.category} • {transaction.date}</p>
                       </div>
                     </div>
-                    <span className={transaction.amount > 0 ? "text-green-500 font-medium" : "text-red-500 font-medium"}>
-                      {formatCurrency(transaction.amount)}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className={transaction.amount > 0 ? "text-green-500 font-medium mr-2" : "text-red-500 font-medium mr-2"}>
+                        {formatCurrency(transaction.amount)}
+                      </span>
+                      <Link to={`/transactions`}>
+                        <Button variant="ghost" size="icon">
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </Link>
+                      <Button variant="ghost" size="icon" onClick={() => handleDelete(transaction.id)}>
+                        <Trash className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>

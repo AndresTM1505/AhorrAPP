@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import AnimatedButton from '@/components/AnimatedButton';
 
@@ -12,15 +12,10 @@ const Index = () => {
           Una aplicación de ahorro personal con múltiples funcionalidades para ayudarte a controlar tus finanzas.
         </p>
         
-        <div className="flex flex-col gap-4 sm:flex-row sm:gap-6 justify-center">
+        <div className="flex justify-center">
           <Link to="/login">
             <AnimatedButton variant="primary" size="lg">
               Iniciar Sesión
-            </AnimatedButton>
-          </Link>
-          <Link to="/main">
-            <AnimatedButton variant="secondary" size="lg">
-              Explorar Demo
             </AnimatedButton>
           </Link>
         </div>
