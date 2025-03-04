@@ -18,12 +18,18 @@ const Profile = () => {
 
   // Sample data for the bar chart
   const chartData = [
-    { name: 'Ene', savings: 400 },
-    { name: 'Feb', savings: 300 },
-    { name: 'Mar', savings: 600 },
-    { name: 'Abr', savings: 800 },
-    { name: 'May', savings: 500 },
-    { name: 'Jun', savings: 400 },
+    { name: 'Ene', savings: 0 },
+    { name: 'Feb', savings: 0 },
+    { name: 'Mar', savings: 0 },
+    { name: 'Abr', savings: 0 },
+    { name: 'May', savings: 0 },
+    { name: 'Jun', savings: 0 },
+    { name: 'Jul', savings: 0 },
+    { name: 'Ago', savings: 0 },
+    { name: 'Set', savings: 0 },
+    { name: 'Oct', savings: 0 },
+    { name: 'Nov', savings: 0 },
+    { name: 'Dic', savings: 0 },
   ];
 
   return (
