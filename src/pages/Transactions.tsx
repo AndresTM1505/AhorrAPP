@@ -66,7 +66,8 @@ const Transactions = () => {
     updateTransaction({
       id: selectedTransaction.id,
       ...editedTransaction,
-      amount: parseFloat(editedTransaction.amount)
+      amount: parseFloat(editedTransaction.amount),
+      type: editedTransaction.type as "Gasto" | "Ingreso"
     });
     
     setIsEditDialogOpen(false);

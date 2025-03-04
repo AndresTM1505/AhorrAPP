@@ -27,7 +27,7 @@ const Login = () => {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">AhorroAPP</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">AhorrAPP</CardTitle>
           <CardDescription className="text-center">
             Inicia sesión para administrar tus finanzas
           </CardDescription>
@@ -53,6 +53,7 @@ const Login = () => {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  placeholder="********"
                   required
                 />
                 <button 

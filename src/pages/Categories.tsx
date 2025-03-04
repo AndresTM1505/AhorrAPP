@@ -23,28 +23,28 @@ interface Category {
 
 // Available icons for selection
 const iconOptions = [
-  { name: "coffee", icon: <Coffee size={20} />, label: "Café" },
-  { name: "briefcase", icon: <Briefcase size={20} />, label: "Trabajo" },
-  { name: "bus", icon: <Bus size={20} />, label: "Transporte" },
-  { name: "music", icon: <Music size={20} />, label: "Música" },
-  { name: "heart", icon: <Heart size={20} />, label: "Salud" },
-  { name: "home", icon: <Home size={20} />, label: "Casa" },
-  { name: "shopping-cart", icon: <ShoppingCart size={20} />, label: "Compras" },
-  { name: "bike", icon: <Bike size={20} />, label: "Deporte" },
-  { name: "plane", icon: <Plane size={20} />, label: "Viajes" },
-  { name: "book", icon: <Book size={20} />, label: "Educación" },
-  { name: "dollar-sign", icon: <DollarSign size={20} />, label: "Finanzas" },
-  { name: "smartphone", icon: <Smartphone size={20} />, label: "Tecnología" }
+  { name: "coffee", icon: <Coffee size={20} />},
+  { name: "briefcase", icon: <Briefcase size={20} />, label: "" },
+  { name: "bus", icon: <Bus size={20} />, label: "" },
+  { name: "music", icon: <Music size={20} />, label: "" },
+  { name: "heart", icon: <Heart size={20} />, label: "" },
+  { name: "home", icon: <Home size={20} />, label: "" },
+  { name: "shopping-cart", icon: <ShoppingCart size={20} />, label: "" },
+  { name: "bike", icon: <Bike size={20} />, label: "" },
+  { name: "plane", icon: <Plane size={20} />, label: "" },
+  { name: "book", icon: <Book size={20} />, label: "" },
+  { name: "dollar-sign", icon: <DollarSign size={20} />, label: "" },
+  { name: "smartphone", icon: <Smartphone size={20} />, label: "" }
 ];
 
 const Categories = () => {
   const [categories, setCategories] = useState<Category[]>([
-    { id: 1, name: "Oficina", icon: <Briefcase size={20} />, iconName: "briefcase" },
-    { id: 2, name: "Transporte", icon: <Bus size={20} />, iconName: "bus" },
-    { id: 3, name: "Entretenimiento", icon: <Music size={20} />, iconName: "music" },
-    { id: 4, name: "Salud", icon: <Heart size={20} />, iconName: "heart" },
-    { id: 5, name: "Casa", icon: <Home size={20} />, iconName: "home" },
-    { id: 6, name: "Alimentos", icon: <Coffee size={20} />, iconName: "coffee" },
+    { id: 1, name: "Oficina", icon: <Briefcase size={20} />, iconName: "" },
+    { id: 2, name: "Transporte", icon: <Bus size={20} />, iconName: "" },
+    { id: 3, name: "Entretenimiento", icon: <Music size={20} />, iconName: "" },
+    { id: 4, name: "Salud", icon: <Heart size={20} />, iconName: "" },
+    { id: 5, name: "Casa", icon: <Home size={20} />, iconName: "" },
+    { id: 6, name: "Alimentos", icon: <Coffee size={20} />, iconName: "" },
   ]);
   
   const [newCategory, setNewCategory] = useState("");
