@@ -1,6 +1,8 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTransactions } from '@/contexts/TransactionsContext';
+import { useToast } from '@/hooks/use-toast';
 import SideMenu from '@/components/SideMenu';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,16 +15,45 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 
 const NewExpense = () => {
   const [amount, setAmount] = useState('');
-  const [type, setType] = useState('Gasto');
+  const [type, setType] = useState<'Ingreso' | 'Gasto'>('Gasto');
   const [category, setCategory] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [description, setDescription] = useState('');
   const [isFixed, setIsFixed] = useState(false);
   const navigate = useNavigate();
+  const { addTransaction } = useTransactions();
+  const { toast } = useToast();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Here you would handle the form submission
+    
+    // Validar los campos
+    if (!amount || !category) {
+      toast({
+        title: "Error",
+        description: "Por favor, completa todos los campos obligatorios.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Crear y guardar el movimiento
+    addTransaction({
+      amount: parseFloat(amount),
+      type,
+      category,
+      date,
+      description,
+      isFixed,
+    });
+    
+    // Mostrar confirmación
+    toast({
+      title: "Movimiento registrado",
+      description: "Se ha guardado el movimiento correctamente."
+    });
+    
+    // Navegar a la pantalla principal
     navigate('/main');
   };
 
@@ -65,7 +96,11 @@ const NewExpense = () => {
               {/* Type */}
               <div className="space-y-2">
                 <Label>Tipo</Label>
-                <RadioGroup value={type} onValueChange={setType} className="flex space-x-4">
+                <RadioGroup 
+                  value={type} 
+                  onValueChange={(value) => setType(value as 'Ingreso' | 'Gasto')} 
+                  className="flex space-x-4"
+                >
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="Ingreso" id="ingreso" />
                     <Label htmlFor="ingreso" className="cursor-pointer">Ingreso</Label>

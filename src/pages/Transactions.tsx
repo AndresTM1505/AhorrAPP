@@ -1,19 +1,17 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTransactions } from '@/contexts/TransactionsContext';
 import SideMenu from '@/components/SideMenu';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ArrowLeft, TrendingUp, TrendingDown, CirclePlus } from 'lucide-react';
+import { formatCurrency } from '@/lib/utils';
 
 const Transactions = () => {
   const navigate = useNavigate();
+  const { transactions } = useTransactions();
   
-  const sampleTransactions = [
-    { id: 1, description: 'Farmacia', amount: -10.00, category: 'Salud', date: '2023-06-15' },
-    { id: 2, description: 'Internet', amount: -20.00, category: 'Casa', date: '2023-06-10' },
-  ];
-
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -24,8 +22,8 @@ const Transactions = () => {
 
       {/* Transactions list */}
       <main className="p-4 space-y-4">
-        {sampleTransactions.length > 0 ? (
-          sampleTransactions.map(transaction => (
+        {transactions.length > 0 ? (
+          transactions.map(transaction => (
             <Card key={transaction.id} className="p-4 flex justify-between items-center">
               <div className="flex items-center">
                 <div className="bg-muted h-10 w-10 rounded-full flex items-center justify-center mr-3">
@@ -41,7 +39,7 @@ const Transactions = () => {
                 </div>
               </div>
               <span className={transaction.amount > 0 ? "text-green-500 font-medium" : "text-red-500 font-medium"}>
-                {transaction.amount > 0 ? '+' : ''}{transaction.amount.toFixed(2)}€
+                {formatCurrency(transaction.amount)}
               </span>
             </Card>
           ))

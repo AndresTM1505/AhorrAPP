@@ -1,12 +1,19 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useTransactions } from '@/contexts/TransactionsContext';
 import SideMenu from '@/components/SideMenu';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CirclePlus, TrendingUp, TrendingDown, PiggyBank, MessageCircleIcon } from 'lucide-react';
+import { CirclePlus, TrendingUp, TrendingDown, MessageCircleIcon } from 'lucide-react';
+import { formatCurrency } from '@/lib/utils';
 
 const Main = () => {
+  const { transactions, balance, incomeTotal, expenseTotal } = useTransactions();
+  
+  // Obtener los 3 movimientos más recientes
+  const recentTransactions = transactions.slice(0, 3);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -23,10 +30,10 @@ const Main = () => {
             <CardTitle className="text-sm font-medium text-muted-foreground">Balance Total</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">0.00€</div>
+            <div className="text-3xl font-bold">{formatCurrency(balance)}</div>
             <div className="flex items-center text-sm mt-2 text-muted-foreground">
               <TrendingUp className="h-4 w-4 mr-1 text-green-500" />
-              <span>0% este mes</span>
+              <span>Este mes</span>
             </div>
           </CardContent>
         </Card>
@@ -38,7 +45,7 @@ const Main = () => {
               <CardTitle className="text-sm font-medium text-muted-foreground">Ingresos</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-semibold text-green-500">0.00€</div>
+              <div className="text-2xl font-semibold text-green-500">{formatCurrency(incomeTotal)}</div>
             </CardContent>
           </Card>
           <Card>
@@ -46,7 +53,7 @@ const Main = () => {
               <CardTitle className="text-sm font-medium text-muted-foreground">Gastos</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-semibold text-red-500">0.00€</div>
+              <div className="text-2xl font-semibold text-red-500">{formatCurrency(expenseTotal)}</div>
             </CardContent>
           </Card>
         </div>
@@ -66,9 +73,34 @@ const Main = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-muted-foreground text-center py-4">
-              No hay movimientos recientes
-            </div>
+            {recentTransactions.length > 0 ? (
+              <div className="space-y-3">
+                {recentTransactions.map(transaction => (
+                  <div key={transaction.id} className="flex justify-between items-center p-2 rounded-md hover:bg-muted/50">
+                    <div className="flex items-center">
+                      <div className="bg-muted h-10 w-10 rounded-full flex items-center justify-center mr-3">
+                        {transaction.amount > 0 ? (
+                          <TrendingUp className="h-5 w-5 text-green-500" />
+                        ) : (
+                          <TrendingDown className="h-5 w-5 text-red-500" />
+                        )}
+                      </div>
+                      <div>
+                        <h3 className="font-medium">{transaction.description}</h3>
+                        <p className="text-sm text-muted-foreground">{transaction.category} • {transaction.date}</p>
+                      </div>
+                    </div>
+                    <span className={transaction.amount > 0 ? "text-green-500 font-medium" : "text-red-500 font-medium"}>
+                      {formatCurrency(transaction.amount)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-muted-foreground text-center py-4">
+                No hay movimientos recientes
+              </div>
+            )}
           </CardContent>
         </Card>
       </main>
