@@ -7,12 +7,14 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 
 const Register = () => {
   const [formData, setFormData] = useState({
-    name: '',
+    firstName: '', // Cambiar de 'name' a 'firstName'
+    lastName: '',  // Agregar 'lastName' al estado
     email: '',
     password: '',
     confirmPassword: '',
     photo: null,
   });
+  
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -28,7 +30,7 @@ const Register = () => {
     // Aquí puedes agregar la lógica para registrar al usuario
 
     // Navegar a la página principal después del registro
-    navigate('/main');
+    navigate('/login');
   };
 
   const handlePhotoChange = (e) => {
@@ -46,30 +48,31 @@ const Register = () => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleRegister} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">NOMBRE</Label>
-              <Input 
-                id="name" 
-                name="name"
-                type="text" 
-                value={formData.name}
-                onChange={handleChange}
-                placeholder="Tu nombre"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="name">APELLIDOS</Label>
-              <Input 
-                id="name" 
-                name="name"
-                type="text" 
-                value={formData.name}
-                onChange={handleChange}
-                placeholder="Tus apellidos"
-                required
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="firstName">NOMBRE</Label>
+            <Input 
+              id="firstName" 
+              name="firstName" // Cambiar a un identificador único
+              type="text" 
+              value={formData.firstName} // Ajustar el estado
+              onChange={handleChange}
+              placeholder="Tu nombre"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="lastName">APELLIDOS</Label>
+            <Input 
+              id="lastName" 
+              name="lastName" // Cambiar a otro identificador único
+              type="text" 
+              value={formData.lastName} // Ajustar el estado
+              onChange={handleChange}
+              placeholder="Tus apellidos"
+              required
+            />
+          </div>
+            
             <div className="space-y-2">
               <Label htmlFor="email">EMAIL</Label>
               <Input 
