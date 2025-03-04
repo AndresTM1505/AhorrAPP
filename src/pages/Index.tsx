@@ -1,47 +1,30 @@
 
 import React, { useEffect } from 'react';
-import Navigation from '@/components/Navigation';
-import Hero from '@/components/Hero';
-import ProductShowcase from '@/components/ProductShowcase';
-import Features from '@/components/Features';
-import Footer from '@/components/Footer';
+import { Link } from 'react-router-dom';
+import AnimatedButton from '@/components/AnimatedButton';
 
 const Index = () => {
-  // Smooth scroll for anchor links
-  useEffect(() => {
-    const handleAnchorClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      const anchor = target.closest('a');
-      
-      if (!anchor) return;
-      
-      const href = anchor.getAttribute('href');
-      if (!href || !href.startsWith('#')) return;
-      
-      const targetElement = document.getElementById(href.substring(1));
-      if (!targetElement) return;
-      
-      e.preventDefault();
-      
-      window.scrollTo({
-        top: targetElement.offsetTop - 80, // Account for fixed header
-        behavior: 'smooth'
-      });
-    };
-    
-    document.addEventListener('click', handleAnchorClick);
-    return () => document.removeEventListener('click', handleAnchorClick);
-  }, []);
-  
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navigation />
-      <main>
-        <Hero />
-        <ProductShowcase />
-        <Features />
-      </main>
-      <Footer />
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-primary/10 to-background p-6">
+      <div className="text-center max-w-lg animate-fade-in">
+        <h1 className="text-4xl font-bold mb-6 tracking-tight">AhorroAPP</h1>
+        <p className="text-lg mb-8 text-muted-foreground">
+          Una aplicación de ahorro personal con múltiples funcionalidades para ayudarte a controlar tus finanzas.
+        </p>
+        
+        <div className="flex flex-col gap-4 sm:flex-row sm:gap-6 justify-center">
+          <Link to="/login">
+            <AnimatedButton variant="primary" size="lg">
+              Iniciar Sesión
+            </AnimatedButton>
+          </Link>
+          <Link to="/main">
+            <AnimatedButton variant="secondary" size="lg">
+              Explorar Demo
+            </AnimatedButton>
+          </Link>
+        </div>
+      </div>
     </div>
   );
 };
