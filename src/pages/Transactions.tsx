@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTransactions } from '@/contexts/TransactionsContext';
 import SideMenu from '@/components/SideMenu';
@@ -17,7 +17,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 
 const Transactions = () => {
   const navigate = useNavigate();
-  const { transactions, deleteTransaction, updateTransaction } = useTransactions();
+  const { transactions, deleteTransaction, updateTransaction, fetchTransactions, isLoading, error } = useTransactions();
   const { toast } = useToast();
   
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -30,6 +30,22 @@ const Transactions = () => {
     description: '',
     isFixed: false
   });
+  
+  // Fetch transactions when component mounts
+  useEffect(() => {
+    fetchTransactions();
+  }, [fetchTransactions]);
+  
+  // Show error toast if API call fails
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Error",
+        description: error,
+        variant: "destructive",
+      });
+    }
+  }, [error, toast]);
   
   const handleDelete = (id: number) => {
     deleteTransaction(id);
@@ -53,7 +69,7 @@ const Transactions = () => {
   };
   
   const handleUpdate = () => {
-    // Validar datos
+    // Validate data
     if (!editedTransaction.amount || !editedTransaction.category) {
       toast({
         title: "Error",
@@ -63,11 +79,15 @@ const Transactions = () => {
       return;
     }
     
+    // Make sure type is correctly set as 'Ingreso' or 'Gasto'
+    const validType: 'Ingreso' | 'Gasto' = 
+      editedTransaction.type === 'Ingreso' ? 'Ingreso' : 'Gasto';
+    
     updateTransaction({
       id: selectedTransaction.id,
       ...editedTransaction,
       amount: parseFloat(editedTransaction.amount),
-      type: editedTransaction.type
+      type: validType
     });
     
     setIsEditDialogOpen(false);
@@ -88,7 +108,11 @@ const Transactions = () => {
 
       {/* Transactions list */}
       <main className="p-4 space-y-4">
-        {transactions.length > 0 ? (
+        {isLoading ? (
+          <div className="text-center py-10">
+            Cargando movimientos...
+          </div>
+        ) : transactions.length > 0 ? (
           transactions.map(transaction => (
             <Card key={transaction.id} className="p-4 flex justify-between items-center">
               <div className="flex items-center">
@@ -162,7 +186,7 @@ const Transactions = () => {
               <Label>Tipo</Label>
               <RadioGroup 
                 value={editedTransaction.type} 
-                onValueChange={(value) => setEditedTransaction({...editedTransaction, type: value})} 
+                onValueChange={(value: 'Ingreso' | 'Gasto') => setEditedTransaction({...editedTransaction, type: value})} 
                 className="flex space-x-4"
               >
                 <div className="flex items-center space-x-2">

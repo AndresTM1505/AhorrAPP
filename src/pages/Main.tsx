@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTransactions } from '@/contexts/TransactionsContext';
 import SideMenu from '@/components/SideMenu';
@@ -10,10 +10,26 @@ import { formatCurrency } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
 const Main = () => {
-  const { transactions, balance, incomeTotal, expenseTotal, deleteTransaction } = useTransactions();
+  const { transactions, balance, incomeTotal, expenseTotal, deleteTransaction, fetchTransactions, isLoading, error } = useTransactions();
   const { toast } = useToast();
   
-  // Obtener los 3 movimientos más recientes
+  // Fetch transactions when component mounts
+  useEffect(() => {
+    fetchTransactions();
+  }, [fetchTransactions]);
+  
+  // If error from API, show toast
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Error",
+        description: error,
+        variant: "destructive",
+      });
+    }
+  }, [error, toast]);
+  
+  // Get the 3 most recent transactions
   const recentTransactions = transactions.slice(0, 3);
   
   const handleDelete = (id: number) => {
@@ -25,10 +41,10 @@ const Main = () => {
   };
   
   const openWhatsApp = () => {
-    // Número específico para enviar mensaje
+    // The WhatsApp number to send messages to
     const phoneNumber = "+34603831258";
     
-    // Formato del mensaje para WhatsApp de forma más interactiva
+    // Interactive message format for WhatsApp
     const message = encodeURIComponent(
       "*NUEVO MOVIMIENTO* \n\n" +
       "Hola! Para registrar un nuevo movimiento, por favor completa los campos:\n\n" +
@@ -38,8 +54,23 @@ const Main = () => {
       "¡Gracias por usar AhorroAPP!"
     );
     
-    // Abrir WhatsApp con el mensaje predefinido
+    // Open WhatsApp with the predefined message
     window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
+    
+    // After sending the message, show a notification to refresh
+    toast({
+      title: "Mensaje Enviado",
+      description: "Después de enviar el mensaje, regresa y actualiza la app para ver tus cambios."
+    });
+    
+    // Schedule a refresh in 30 seconds to check for new transactions
+    setTimeout(() => {
+      fetchTransactions();
+      toast({
+        title: "Actualización",
+        description: "Buscando nuevas transacciones..."
+      });
+    }, 30000);
   };
 
   return (
@@ -104,7 +135,9 @@ const Main = () => {
             </div>
           </CardHeader>
           <CardContent>
-            {recentTransactions.length > 0 ? (
+            {isLoading ? (
+              <div className="text-center py-4">Cargando...</div>
+            ) : recentTransactions.length > 0 ? (
               <div className="space-y-3">
                 {recentTransactions.map(transaction => (
                   <div key={transaction.id} className="flex justify-between items-center p-2 rounded-md hover:bg-muted/50">
