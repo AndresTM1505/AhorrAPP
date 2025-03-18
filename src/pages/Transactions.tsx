@@ -5,7 +5,7 @@ import { useTransactions } from '@/contexts/TransactionsContext';
 import SideMenu from '@/components/SideMenu';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { ArrowLeft, TrendingUp, TrendingDown, CirclePlus, Trash, Edit } from 'lucide-react';
+import { ArrowLeft, TrendingUp, TrendingDown, CirclePlus, Trash, Edit, Filter } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -14,6 +14,13 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
+import { 
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator
+} from '@/components/ui/dropdown-menu';
 
 const Transactions = () => {
   const navigate = useNavigate();
@@ -22,6 +29,9 @@ const Transactions = () => {
   
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
+  const [filteredTransactions, setFilteredTransactions] = useState<any[]>([]);
+  const [activeFilter, setActiveFilter] = useState<string>("all");
+  
   const [editedTransaction, setEditedTransaction] = useState({
     amount: '',
     type: 'Gasto' as 'Ingreso' | 'Gasto',
@@ -35,6 +45,27 @@ const Transactions = () => {
   useEffect(() => {
     fetchTransactions();
   }, [fetchTransactions]);
+  
+  // Apply filters to transactions
+  useEffect(() => {
+    if (transactions.length > 0) {
+      if (activeFilter === "3months") {
+        // Filter transactions from the last 3 months
+        const threeMonthsAgo = new Date();
+        threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+        
+        setFilteredTransactions(transactions.filter(transaction => {
+          const transactionDate = new Date(transaction.date);
+          return transactionDate >= threeMonthsAgo;
+        }));
+      } else {
+        // Show all transactions
+        setFilteredTransactions(transactions);
+      }
+    } else {
+      setFilteredTransactions([]);
+    }
+  }, [transactions, activeFilter]);
   
   // Show error toast if API call fails
   useEffect(() => {
@@ -98,22 +129,46 @@ const Transactions = () => {
     });
   };
   
+  const applyFilter = (filter: string) => {
+    setActiveFilter(filter);
+  };
+  
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border p-4 flex items-center">
-        <SideMenu />
-        <h1 className="text-xl font-semibold">Movimientos</h1>
+      <header className="border-b border-border p-4 flex items-center justify-between">
+        <div className="flex items-center">
+          <SideMenu />
+          <h1 className="text-xl font-semibold">Movimientos</h1>
+        </div>
+        
+        {/* Filter Dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="ml-auto flex items-center gap-1">
+              <Filter className="h-4 w-4" />
+              {activeFilter === "all" ? "Todos" : "Últimos 3 meses"}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => applyFilter("all")} className={activeFilter === "all" ? "bg-muted" : ""}>
+              Todos los movimientos
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => applyFilter("3months")} className={activeFilter === "3months" ? "bg-muted" : ""}>
+              Últimos 3 meses
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </header>
 
       {/* Transactions list */}
       <main className="p-4 space-y-4">
         {isLoading ? (
           <div className="text-center py-10">
-            Cargando movimientos...
+            Cargando últimos movimientos...
           </div>
-        ) : transactions.length > 0 ? (
-          transactions.map(transaction => (
+        ) : filteredTransactions.length > 0 ? (
+          filteredTransactions.map(transaction => (
             <Card key={transaction.id} className="p-4 flex justify-between items-center">
               <div className="flex items-center">
                 <div className="bg-muted h-10 w-10 rounded-full flex items-center justify-center mr-3">

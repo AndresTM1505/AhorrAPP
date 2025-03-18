@@ -182,13 +182,13 @@ const Main = () => {
         <Card>
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-lg font-medium">Movimientos Recientes</CardTitle>
+              <CardTitle className="text-lg font-medium">Últimos Movimientos</CardTitle>
               <Link to="/transactions" className="text-sm text-primary hover:underline">Ver todos</Link>
             </div>
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="text-center py-4">Cargando...</div>
+              <div className="text-center py-4">Cargando últimos movimientos...</div>
             ) : recentTransactions.length > 0 ? (
               <div className="space-y-3">
                 {recentTransactions.map(transaction => (
