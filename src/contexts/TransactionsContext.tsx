@@ -24,13 +24,16 @@ interface TransactionsContextType {
   fetchTransactions: () => Promise<void>;
   isLoading: boolean;
   error: string | null;
+  setApiBaseUrl: (url: string) => void;
+  apiBaseUrl: string;
 }
 
 // Storage key for fallback
 const TRANSACTIONS_STORAGE_KEY = 'ahorrapp_transactions';
+const API_URL_STORAGE_KEY = 'ahorrapp_api_url';
 
-// API Base URL - change this to match your server's address
-const API_BASE_URL = 'http://localhost:3001/api';
+// Default API Base URL - editable through the context
+const DEFAULT_API_BASE_URL = 'http://localhost:3001/api';
 
 // Create the context
 const TransactionsContext = createContext<TransactionsContextType | undefined>(undefined);
@@ -49,6 +52,14 @@ export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ childr
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [apiBaseUrl, setApiBaseUrl] = useState<string>(
+    localStorage.getItem(API_URL_STORAGE_KEY) || DEFAULT_API_BASE_URL
+  );
+  
+  // Save API URL to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem(API_URL_STORAGE_KEY, apiBaseUrl);
+  }, [apiBaseUrl]);
 
   // Function to fetch transactions from the API
   const fetchTransactions = async () => {
@@ -56,10 +67,11 @@ export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ childr
     setError(null);
     
     try {
-      const response = await fetch(`${API_BASE_URL}/transactions`);
+      console.log(`Fetching transactions from: ${apiBaseUrl}/transactions`);
+      const response = await fetch(`${apiBaseUrl}/transactions`);
       
       if (!response.ok) {
-        throw new Error('Failed to fetch transactions');
+        throw new Error(`Failed to fetch transactions: ${response.status} ${response.statusText}`);
       }
       
       const data = await response.json();
@@ -89,7 +101,7 @@ export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ childr
     const intervalId = setInterval(fetchTransactions, 30000); // Check every 30 seconds
     
     return () => clearInterval(intervalId); // Cleanup on unmount
-  }, []);
+  }, [apiBaseUrl]); // Refetch when API URL changes
 
   // Function to add a new transaction
   const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
@@ -102,7 +114,8 @@ export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ childr
         ? Math.abs(Number(transaction.amount)) 
         : -Math.abs(Number(transaction.amount));
       
-      const response = await fetch(`${API_BASE_URL}/transactions`, {
+      console.log(`Adding transaction to: ${apiBaseUrl}/transactions`);
+      const response = await fetch(`${apiBaseUrl}/transactions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -114,7 +127,7 @@ export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ childr
       });
       
       if (!response.ok) {
-        throw new Error('Failed to add transaction');
+        throw new Error(`Failed to add transaction: ${response.status} ${response.statusText}`);
       }
       
       const newTransaction = await response.json();
@@ -126,7 +139,7 @@ export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ childr
       localStorage.setItem(TRANSACTIONS_STORAGE_KEY, JSON.stringify([newTransaction, ...transactions]));
     } catch (err) {
       console.error('Error adding transaction:', err);
-      setError('Failed to add transaction');
+      setError('Failed to add transaction. Using local data storage as fallback.');
       
       // Fallback to local operation if API call fails
       const newId = Math.max(0, ...transactions.map(t => t.id)) + 1;
@@ -157,7 +170,8 @@ export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ childr
         ? Math.abs(Number(updatedTransaction.amount)) 
         : -Math.abs(Number(updatedTransaction.amount));
       
-      const response = await fetch(`${API_BASE_URL}/transactions/${updatedTransaction.id}`, {
+      console.log(`Updating transaction at: ${apiBaseUrl}/transactions/${updatedTransaction.id}`);
+      const response = await fetch(`${apiBaseUrl}/transactions/${updatedTransaction.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -169,7 +183,7 @@ export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ childr
       });
       
       if (!response.ok) {
-        throw new Error('Failed to update transaction');
+        throw new Error(`Failed to update transaction: ${response.status} ${response.statusText}`);
       }
       
       const result = await response.json();
@@ -187,7 +201,7 @@ export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ childr
       ));
     } catch (err) {
       console.error('Error updating transaction:', err);
-      setError('Failed to update transaction');
+      setError('Failed to update transaction. Using local data storage as fallback.');
       
       // Fallback to local operation
       const updatedAmount = updatedTransaction.type === 'Ingreso' 
@@ -218,12 +232,13 @@ export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ childr
     setError(null);
     
     try {
-      const response = await fetch(`${API_BASE_URL}/transactions/${id}`, {
+      console.log(`Deleting transaction at: ${apiBaseUrl}/transactions/${id}`);
+      const response = await fetch(`${apiBaseUrl}/transactions/${id}`, {
         method: 'DELETE',
       });
       
       if (!response.ok) {
-        throw new Error('Failed to delete transaction');
+        throw new Error(`Failed to delete transaction: ${response.status} ${response.statusText}`);
       }
       
       // Update state
@@ -234,7 +249,7 @@ export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ childr
       localStorage.setItem(TRANSACTIONS_STORAGE_KEY, JSON.stringify(updatedTransactions));
     } catch (err) {
       console.error('Error deleting transaction:', err);
-      setError('Failed to delete transaction');
+      setError('Failed to delete transaction. Using local data storage as fallback.');
       
       // Fallback to local operation
       const updatedTransactions = transactions.filter(t => t.id !== id);
@@ -265,7 +280,9 @@ export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ childr
     expenseTotal,
     fetchTransactions,
     isLoading,
-    error
+    error,
+    apiBaseUrl,
+    setApiBaseUrl
   };
 
   return (

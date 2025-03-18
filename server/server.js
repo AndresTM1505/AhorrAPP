@@ -8,8 +8,13 @@ const { Pool } = require('pg');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware
-app.use(cors());
+// Enhanced CORS settings to allow connections from any origin
+app.use(cors({
+  origin: '*', // Allow all origins
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -206,7 +211,13 @@ app.post('/api/whatsapp-webhook', async (req, res) => {
   }
 });
 
+// Server status endpoint for connection testing
+app.get('/api/status', (req, res) => {
+  res.json({ status: 'Server is running' });
+});
+
 // Start the server
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
+  console.log(`Access the API at http://localhost:${PORT}/api`);
 });
