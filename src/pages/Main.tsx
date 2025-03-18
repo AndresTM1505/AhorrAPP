@@ -33,7 +33,7 @@ const Main = () => {
       "*NUEVO MOVIMIENTO* \n\n" +
       "Hola! Para registrar un nuevo movimiento, por favor completa los campos:\n\n" +
       "*Tipo*/" + "*Categoría/*" + "*Descripción/*" + "*Monto/*" + "*Fecha*\n\n" +
-      "Ej. Gasto, comida, bembos, 22.90, 4-2-25, 3pm\n\n" +
+      "Ej. Gasto, comida, bembos, 22.90, 4-2-25, 3pm\n\n" +
       "Por favor, responde con toda la información completa. Una vez reciba tu mensaje, actualizaré la app con tu nuevo movimiento.\n\n" +
       "¡Gracias por usar AhorroAPP!"
     );

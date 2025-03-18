@@ -1,40 +1,77 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useToast } from '@/hooks/use-toast';
 
 const Register = () => {
   const [formData, setFormData] = useState({
-    firstName: '', // Cambiar de 'name' a 'firstName'
-    lastName: '',  // Agregar 'lastName' al estado
+    firstName: '',
+    lastName: '',  
     email: '',
     password: '',
     confirmPassword: '',
-    photo: null,
+    phoneNumber: '',
+    photoURL: '',
   });
   
+  const { toast } = useToast();
   const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    const { name, value, files } = e.target;
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: files ? files[0] : value,
+      [name]: value,
     });
   };
 
-  const handleRegister = (e) => {
-    e.preventDefault();
-    // Aquí puedes agregar la lógica para registrar al usuario
-
-    // Navegar a la página principal después del registro
-    navigate('/login');
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        setFormData({ ...formData, photoURL: result });
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
-  const handlePhotoChange = (e) => {
-    setFormData({ ...formData, photo: e.target.files[0] });
+  const handleRegister = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validación básica
+    if (formData.password !== formData.confirmPassword) {
+      toast({
+        title: "Error",
+        description: "Las contraseñas no coinciden.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Guardar datos del usuario en localStorage
+    const userData = {
+      name: `${formData.firstName} ${formData.lastName}`.trim(),
+      email: formData.email,
+      phone: formData.phoneNumber,
+      photoURL: formData.photoURL,
+    };
+    
+    localStorage.setItem('ahorrapp_profile_data', JSON.stringify(userData));
+    
+    toast({
+      title: "Registro exitoso",
+      description: "Tu cuenta ha sido creada correctamente."
+    });
+    
+    // Navegar a la página de login
+    navigate('/login');
   };
 
   return (
@@ -48,30 +85,51 @@ const Register = () => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleRegister} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="firstName">NOMBRE</Label>
-            <Input 
-              id="firstName" 
-              name="firstName" // Cambiar a un identificador único
-              type="text" 
-              value={formData.firstName} // Ajustar el estado
-              onChange={handleChange}
-              placeholder="Tu nombre"
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="lastName">APELLIDOS</Label>
-            <Input 
-              id="lastName" 
-              name="lastName" // Cambiar a otro identificador único
-              type="text" 
-              value={formData.lastName} // Ajustar el estado
-              onChange={handleChange}
-              placeholder="Tus apellidos"
-              required
-            />
-          </div>
+            {/* Foto de perfil */}
+            <div className="flex flex-col items-center mb-4">
+              <Avatar className="h-24 w-24 mb-2">
+                <AvatarImage src={formData.photoURL} />
+                <AvatarFallback className="bg-primary/10">
+                  {formData.firstName.charAt(0)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="space-y-2 w-full">
+                <Label htmlFor="photo" className="text-center block">FOTO DE PERFIL</Label>
+                <Input 
+                  id="photo" 
+                  name="photo"
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoChange}
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="firstName">NOMBRE</Label>
+              <Input 
+                id="firstName" 
+                name="firstName"
+                type="text" 
+                value={formData.firstName}
+                onChange={handleChange}
+                placeholder="Tu nombre"
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="lastName">APELLIDOS</Label>
+              <Input 
+                id="lastName" 
+                name="lastName"
+                type="text" 
+                value={formData.lastName}
+                onChange={handleChange}
+                placeholder="Tus apellidos"
+                required
+              />
+            </div>
             
             <div className="space-y-2">
               <Label htmlFor="email">EMAIL</Label>
@@ -85,6 +143,20 @@ const Register = () => {
                 required
               />
             </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="phoneNumber">TELÉFONO</Label>
+              <Input 
+                id="phoneNumber" 
+                name="phoneNumber"
+                type="tel" 
+                value={formData.phoneNumber}
+                onChange={handleChange}
+                placeholder="+34 600 000 000"
+                required
+              />
+            </div>
+            
             <div className="space-y-2">
               <Label htmlFor="password">CONTRASEÑA</Label>
               <Input 
@@ -97,6 +169,7 @@ const Register = () => {
                 required
               />
             </div>
+            
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">CONFIRMAR CONTRASEÑA</Label>
               <Input 
@@ -109,20 +182,17 @@ const Register = () => {
                 required
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="photo">FOTO DE PERFIL</Label>
-              <Input 
-                id="photo" 
-                name="photo"
-                type="file"
-                onChange={handlePhotoChange}
-              />
-            </div>
+            
             <Button type="submit" className="w-full">
               REGISTRARSE
             </Button>
           </form>
         </CardContent>
+        <CardFooter className="flex justify-center">
+          <p className="text-sm text-muted-foreground">
+            ¿Ya tienes una cuenta? <a href="/login" className="text-primary hover:underline">Iniciar sesión</a>
+          </p>
+        </CardFooter>
       </Card>
     </div>
   );

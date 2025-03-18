@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -71,7 +72,7 @@ const Login = () => {
         </CardContent>
         <CardFooter className="flex flex-col">
           <p className="text-sm text-muted-foreground text-center mt-2">
-            ¿No tienes una cuenta? <a href="/register" className="text-primary hover:underline">Regístrate</a>
+            ¿No tienes una cuenta? <Link to="/register" className="text-primary hover:underline">Regístrate</Link>
           </p>
         </CardFooter>
       </Card>

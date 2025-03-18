@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 
 // Definición del tipo de transacción
 export interface Transaction {
@@ -23,6 +23,9 @@ interface TransactionsContextType {
   expenseTotal: number;
 }
 
+// Storage key
+const TRANSACTIONS_STORAGE_KEY = 'ahorrapp_transactions';
+
 // Crear el contexto
 const TransactionsContext = createContext<TransactionsContextType | undefined>(undefined);
 
@@ -37,7 +40,16 @@ export const useTransactions = () => {
 
 // Proveedor del contexto
 export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>(() => {
+    // Load transactions from localStorage on initial render
+    const savedTransactions = localStorage.getItem(TRANSACTIONS_STORAGE_KEY);
+    return savedTransactions ? JSON.parse(savedTransactions) : [];
+  });
+
+  // Save transactions to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem(TRANSACTIONS_STORAGE_KEY, JSON.stringify(transactions));
+  }, [transactions]);
 
   // Función para agregar una nueva transacción
   const addTransaction = (transaction: Omit<Transaction, 'id'>) => {

@@ -21,17 +21,17 @@ const Transactions = () => {
   const { toast } = useToast();
   
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [selectedTransaction, setSelectedTransaction] = useState(null);
+  const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
   const [editedTransaction, setEditedTransaction] = useState({
     amount: '',
-    type: 'Gasto',
+    type: 'Gasto' as 'Ingreso' | 'Gasto',
     category: '',
     date: '',
     description: '',
     isFixed: false
   });
   
-  const handleDelete = (id) => {
+  const handleDelete = (id: number) => {
     deleteTransaction(id);
     toast({
       title: "Eliminado",
@@ -39,7 +39,7 @@ const Transactions = () => {
     });
   };
   
-  const handleEdit = (transaction) => {
+  const handleEdit = (transaction: any) => {
     setSelectedTransaction(transaction);
     setEditedTransaction({
       amount: Math.abs(transaction.amount).toString(),
@@ -67,7 +67,7 @@ const Transactions = () => {
       id: selectedTransaction.id,
       ...editedTransaction,
       amount: parseFloat(editedTransaction.amount),
-      type: editedTransaction.type as "Gasto" | "Ingreso"
+      type: editedTransaction.type
     });
     
     setIsEditDialogOpen(false);
