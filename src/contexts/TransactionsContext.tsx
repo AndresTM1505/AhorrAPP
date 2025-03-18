@@ -68,7 +68,15 @@ export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ childr
     
     try {
       console.log(`Fetching transactions from: ${apiBaseUrl}/transactions`);
-      const response = await fetch(`${apiBaseUrl}/transactions`);
+      const response = await fetch(`${apiBaseUrl}/transactions`, {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        mode: 'cors',
+        // Add a timeout to prevent long loading states
+        signal: AbortSignal.timeout(5000) // 5 seconds timeout
+      });
       
       if (!response.ok) {
         throw new Error(`Failed to fetch transactions: ${response.status} ${response.statusText}`);
@@ -81,6 +89,8 @@ export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ childr
       localStorage.setItem(TRANSACTIONS_STORAGE_KEY, JSON.stringify(data));
     } catch (err) {
       console.error('Error fetching transactions:', err);
+      
+      // More user-friendly error message
       setError('Failed to load transactions. Using local data if available.');
       
       // Fall back to localStorage if API call fails
@@ -93,12 +103,12 @@ export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ childr
     }
   };
   
-  // Load transactions when component mounts
+  // Load transactions when component mounts - but with reduced polling frequency
   useEffect(() => {
     fetchTransactions();
     
-    // Set up polling to check for new transactions (e.g., from WhatsApp)
-    const intervalId = setInterval(fetchTransactions, 30000); // Check every 30 seconds
+    // Set up polling to check for new transactions (e.g., from WhatsApp) but less frequently
+    const intervalId = setInterval(fetchTransactions, 60000); // Check every minute instead of 30 seconds
     
     return () => clearInterval(intervalId); // Cleanup on unmount
   }, [apiBaseUrl]); // Refetch when API URL changes

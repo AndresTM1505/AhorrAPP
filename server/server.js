@@ -12,7 +12,9 @@ const PORT = process.env.PORT || 3001;
 app.use(cors({
   origin: '*', // Allow all origins
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  credentials: true,
+  optionsSuccessStatus: 200
 }));
 
 app.use(bodyParser.json());
@@ -49,6 +51,11 @@ const initializeDatabase = async () => {
 
 // Initialize database when server starts
 initializeDatabase();
+
+// Add a health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', message: 'Server is running properly' });
+});
 
 // Route to get all transactions
 app.get('/api/transactions', async (req, res) => {
@@ -220,4 +227,5 @@ app.get('/api/status', (req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Access the API at http://localhost:${PORT}/api`);
+  console.log(`Health check endpoint: http://localhost:${PORT}/api/health`);
 });

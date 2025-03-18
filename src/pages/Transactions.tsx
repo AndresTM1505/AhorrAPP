@@ -5,10 +5,16 @@ import { useTransactions } from '@/contexts/TransactionsContext';
 import SideMenu from '@/components/SideMenu';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { ArrowLeft, TrendingUp, TrendingDown, CirclePlus, Trash, Edit, Filter } from 'lucide-react';
+import { 
+  ArrowLeft, TrendingUp, TrendingDown, CirclePlus, 
+  Trash, Edit, Filter, Settings 
+} from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { 
+  Dialog, DialogContent, DialogFooter, DialogHeader, 
+  DialogTitle 
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -19,15 +25,21 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const Transactions = () => {
   const navigate = useNavigate();
-  const { transactions, deleteTransaction, updateTransaction, fetchTransactions, isLoading, error } = useTransactions();
+  const { 
+    transactions, deleteTransaction, updateTransaction, 
+    fetchTransactions, isLoading, error, apiBaseUrl, setApiBaseUrl 
+  } = useTransactions();
   const { toast } = useToast();
   
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [newApiUrl, setNewApiUrl] = useState(apiBaseUrl);
+  const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'failed'>('checking');
   const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
   const [filteredTransactions, setFilteredTransactions] = useState<any[]>([]);
   const [activeFilter, setActiveFilter] = useState<string>("all");
@@ -67,7 +79,7 @@ const Transactions = () => {
     }
   }, [transactions, activeFilter]);
   
-  // Show error toast if API call fails
+  // Show error toast if API call fails but only once
   useEffect(() => {
     if (error) {
       toast({
@@ -133,6 +145,60 @@ const Transactions = () => {
     setActiveFilter(filter);
   };
   
+  // Function to test server connection
+  const testConnection = async () => {
+    setConnectionStatus('checking');
+    try {
+      const response = await fetch(`${newApiUrl}/transactions`, {
+        headers: {
+          'Accept': 'application/json',
+        },
+        mode: 'cors',
+        signal: AbortSignal.timeout(5000) // 5 seconds timeout
+      });
+      if (response.ok) {
+        setConnectionStatus('connected');
+        return true;
+      } else {
+        setConnectionStatus('failed');
+        return false;
+      }
+    } catch (err) {
+      console.error('Connection test failed:', err);
+      setConnectionStatus('failed');
+      return false;
+    }
+  };
+
+  // Function to save API URL
+  const saveApiUrl = async () => {
+    const isConnected = await testConnection();
+    
+    if (isConnected) {
+      setApiBaseUrl(newApiUrl);
+      toast({
+        title: "Configuración guardada",
+        description: "La conexión al servidor se ha establecido correctamente."
+      });
+      setIsSettingsOpen(false);
+      fetchTransactions();
+    } else {
+      toast({
+        title: "Error de conexión",
+        description: "No se pudo conectar al servidor. Revise la URL y asegúrese de que el servidor esté en ejecución.",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  const forceRefresh = () => {
+    toast({
+      title: "Actualizando",
+      description: "Buscando nuevos movimientos..."
+    });
+    fetchTransactions();
+  };
+  
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -142,27 +208,68 @@ const Transactions = () => {
           <h1 className="text-xl font-semibold">Movimientos</h1>
         </div>
         
-        {/* Filter Dropdown */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="ml-auto flex items-center gap-1">
-              <Filter className="h-4 w-4" />
-              {activeFilter === "all" ? "Todos" : "Últimos 3 meses"}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => applyFilter("all")} className={activeFilter === "all" ? "bg-muted" : ""}>
-              Todos los movimientos
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => applyFilter("3months")} className={activeFilter === "3months" ? "bg-muted" : ""}>
-              Últimos 3 meses
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex items-center gap-2">
+          {/* Refresh Button */}
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={forceRefresh} 
+            className="flex items-center gap-1"
+          >
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              width="16" 
+              height="16" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2" 
+              strokeLinecap="round" 
+              strokeLinejoin="round" 
+              className="h-4 w-4"
+            >
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+              <path d="M3 3v5h5"/>
+            </svg>
+            Actualizar
+          </Button>
+          
+          {/* Settings Button */}
+          <Button variant="ghost" size="sm" onClick={() => setIsSettingsOpen(true)}>
+            <Settings className="h-4 w-4" />
+          </Button>
+          
+          {/* Filter Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="flex items-center gap-1">
+                <Filter className="h-4 w-4" />
+                {activeFilter === "all" ? "Todos" : "Últimos 3 meses"}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => applyFilter("all")} className={activeFilter === "all" ? "bg-muted" : ""}>
+                Todos los movimientos
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => applyFilter("3months")} className={activeFilter === "3months" ? "bg-muted" : ""}>
+                Últimos 3 meses
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </header>
 
       {/* Transactions list */}
       <main className="p-4 space-y-4">
+        {/* Show error banner if needed */}
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertDescription>
+              {error}
+            </AlertDescription>
+          </Alert>
+        )}
+        
         {isLoading ? (
           <div className="text-center py-10">
             Cargando últimos movimientos...
@@ -311,6 +418,50 @@ const Transactions = () => {
           </div>
           <DialogFooter>
             <Button onClick={handleUpdate}>Guardar Cambios</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Server settings dialog */}
+      <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Configuración del Servidor</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <Alert variant={error ? "destructive" : "default"}>
+              <AlertDescription>
+                {error ? error : 
+                  "Configura la conexión al servidor de PostgreSQL. Si el servidor está en ejecución en otra máquina, debes proporcionar la dirección IP completa."}
+              </AlertDescription>
+            </Alert>
+
+            <div className="space-y-2">
+              <Label htmlFor="apiUrl">URL de la API</Label>
+              <Input 
+                id="apiUrl" 
+                value={newApiUrl}
+                onChange={(e) => setNewApiUrl(e.target.value)}
+                placeholder="http://localhost:3001/api"
+              />
+              <p className="text-sm text-muted-foreground">
+                Ejemplo: http://localhost:3001/api o http://192.168.1.100:3001/api
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-sm">
+                Estado actual: {connectionStatus === 'checking' ? 'Verificando...' : 
+                               connectionStatus === 'connected' ? 'Conectado' : 'No conectado'}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Asegúrate de que el servidor Node.js esté en ejecución y sea accesible desde este dispositivo.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => testConnection()}>Probar Conexión</Button>
+            <Button onClick={saveApiUrl}>Guardar Configuración</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
