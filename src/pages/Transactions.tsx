@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { 
   ArrowLeft, TrendingUp, TrendingDown, CirclePlus, 
-  Trash, Edit, Filter, Settings 
+  Trash, Edit, CalendarIcon, MessageCircleIcon
 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -21,28 +21,26 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { 
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from '@/components/ui/dropdown-menu';
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const Transactions = () => {
   const navigate = useNavigate();
   const { 
     transactions, deleteTransaction, updateTransaction, 
-    fetchTransactions, isLoading, error, apiBaseUrl, setApiBaseUrl 
+    fetchTransactions, isLoading, error
   } = useTransactions();
   const { toast } = useToast();
   
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [newApiUrl, setNewApiUrl] = useState(apiBaseUrl);
-  const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'failed'>('checking');
   const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
   const [filteredTransactions, setFilteredTransactions] = useState<any[]>([]);
-  const [activeFilter, setActiveFilter] = useState<string>("all");
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   
   const [editedTransaction, setEditedTransaction] = useState({
     amount: '',
@@ -58,26 +56,25 @@ const Transactions = () => {
     fetchTransactions();
   }, [fetchTransactions]);
   
-  // Apply filters to transactions
+  // Apply date filter to transactions
   useEffect(() => {
     if (transactions.length > 0) {
-      if (activeFilter === "3months") {
-        // Filter transactions from the last 3 months
-        const threeMonthsAgo = new Date();
-        threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+      if (selectedDate) {
+        // Filter transactions for the selected date
+        const formattedSelectedDate = format(selectedDate, 'yyyy-MM-dd');
         
         setFilteredTransactions(transactions.filter(transaction => {
-          const transactionDate = new Date(transaction.date);
-          return transactionDate >= threeMonthsAgo;
+          // Compare just the date part
+          return transaction.date === formattedSelectedDate;
         }));
       } else {
-        // Show all transactions
+        // Show all transactions when no date is selected
         setFilteredTransactions(transactions);
       }
     } else {
       setFilteredTransactions([]);
     }
-  }, [transactions, activeFilter]);
+  }, [transactions, selectedDate]);
   
   // Show error toast if API call fails but only once
   useEffect(() => {
@@ -141,54 +138,41 @@ const Transactions = () => {
     });
   };
   
-  const applyFilter = (filter: string) => {
-    setActiveFilter(filter);
+  const clearDateFilter = () => {
+    setSelectedDate(undefined);
   };
   
-  // Function to test server connection
-  const testConnection = async () => {
-    setConnectionStatus('checking');
-    try {
-      const response = await fetch(`${newApiUrl}/transactions`, {
-        headers: {
-          'Accept': 'application/json',
-        },
-        mode: 'cors',
-        signal: AbortSignal.timeout(5000) // 5 seconds timeout
-      });
-      if (response.ok) {
-        setConnectionStatus('connected');
-        return true;
-      } else {
-        setConnectionStatus('failed');
-        return false;
-      }
-    } catch (err) {
-      console.error('Connection test failed:', err);
-      setConnectionStatus('failed');
-      return false;
-    }
-  };
-
-  // Function to save API URL
-  const saveApiUrl = async () => {
-    const isConnected = await testConnection();
+  const openWhatsApp = () => {
+    // The WhatsApp number to send messages to
+    const phoneNumber = "+34603831258";
     
-    if (isConnected) {
-      setApiBaseUrl(newApiUrl);
-      toast({
-        title: "Configuración guardada",
-        description: "La conexión al servidor se ha establecido correctamente."
-      });
-      setIsSettingsOpen(false);
+    // Interactive message format for WhatsApp
+    const message = encodeURIComponent(
+      "*NUEVO MOVIMIENTO* \n\n" +
+      "Hola! Para registrar un nuevo movimiento, por favor completa los campos:\n\n" +
+      "*Tipo*/" + "*Categoría/*" + "*Descripción/*" + "*Monto/*" + "*Fecha*\n\n" +
+      "Ej. Gasto, comida, bembos, 22.90, 4-2-25\n\n" +
+      "Por favor, responde con toda la información completa. Una vez reciba tu mensaje, actualizaré la app con tu nuevo movimiento.\n\n" +
+      "¡Gracias por usar AhorroAPP!"
+    );
+    
+    // Open WhatsApp with the predefined message
+    window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
+    
+    // After sending the message, show a notification to refresh
+    toast({
+      title: "Mensaje Enviado",
+      description: "Después de enviar el mensaje, regresa y actualiza la app para ver tus cambios."
+    });
+    
+    // Schedule a refresh in 30 seconds to check for new transactions
+    setTimeout(() => {
       fetchTransactions();
-    } else {
       toast({
-        title: "Error de conexión",
-        description: "No se pudo conectar al servidor. Revise la URL y asegúrese de que el servidor esté en ejecución.",
-        variant: "destructive"
+        title: "Actualización",
+        description: "Buscando nuevas transacciones..."
       });
-    }
+    }, 30000);
   };
   
   const forceRefresh = () => {
@@ -209,6 +193,57 @@ const Transactions = () => {
         </div>
         
         <div className="flex items-center gap-2">
+          {/* WhatsApp Button */}
+          <Button 
+            variant="outline"
+            className="flex items-center gap-1 text-green-500 border-green-500 hover:bg-green-100"
+            onClick={openWhatsApp}
+            size="sm"
+          >
+            <MessageCircleIcon className="h-4 w-4" />
+            WhatsApp
+          </Button>
+          
+          {/* Date Filter */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className={selectedDate ? "text-primary" : ""}
+              >
+                <CalendarIcon className="h-4 w-4 mr-2" />
+                {selectedDate ? format(selectedDate, 'dd/MM/yyyy') : "Filtrar por fecha"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="end">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={setSelectedDate}
+                initialFocus
+                className="pointer-events-auto"
+              />
+              <div className="p-3 border-t border-border flex justify-between">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={clearDateFilter}
+                  className="text-muted-foreground"
+                >
+                  Limpiar filtro
+                </Button>
+                <Button 
+                  variant="default" 
+                  size="sm" 
+                  onClick={() => {}}
+                >
+                  Aplicar
+                </Button>
+              </div>
+            </PopoverContent>
+          </Popover>
+          
           {/* Refresh Button */}
           <Button 
             variant="outline" 
@@ -233,34 +268,28 @@ const Transactions = () => {
             </svg>
             Actualizar
           </Button>
-          
-          {/* Settings Button */}
-          <Button variant="ghost" size="sm" onClick={() => setIsSettingsOpen(true)}>
-            <Settings className="h-4 w-4" />
-          </Button>
-          
-          {/* Filter Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="flex items-center gap-1">
-                <Filter className="h-4 w-4" />
-                {activeFilter === "all" ? "Todos" : "Últimos 3 meses"}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => applyFilter("all")} className={activeFilter === "all" ? "bg-muted" : ""}>
-                Todos los movimientos
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => applyFilter("3months")} className={activeFilter === "3months" ? "bg-muted" : ""}>
-                Últimos 3 meses
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </header>
 
       {/* Transactions list */}
       <main className="p-4 space-y-4">
+        {/* Show filter information */}
+        {selectedDate && (
+          <div className="flex items-center justify-between bg-muted/50 p-3 rounded-md">
+            <p className="text-sm">
+              Mostrando movimientos del día <span className="font-medium">{format(selectedDate, 'dd/MM/yyyy')}</span>
+            </p>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={clearDateFilter}
+              className="h-8 text-muted-foreground"
+            >
+              Mostrar todos
+            </Button>
+          </div>
+        )}
+        
         {/* Show error banner if needed */}
         {error && (
           <Alert variant="destructive" className="mb-4">
@@ -305,7 +334,9 @@ const Transactions = () => {
           ))
         ) : (
           <div className="text-center py-10 text-muted-foreground">
-            No hay movimientos registrados
+            {selectedDate 
+              ? `No hay movimientos registrados para el día ${format(selectedDate, 'dd/MM/yyyy')}` 
+              : 'No hay movimientos registrados'}
           </div>
         )}
       </main>
@@ -418,50 +449,6 @@ const Transactions = () => {
           </div>
           <DialogFooter>
             <Button onClick={handleUpdate}>Guardar Cambios</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
-      {/* Server settings dialog */}
-      <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Configuración del Servidor</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <Alert variant={error ? "destructive" : "default"}>
-              <AlertDescription>
-                {error ? error : 
-                  "Configura la conexión al servidor de PostgreSQL. Si el servidor está en ejecución en otra máquina, debes proporcionar la dirección IP completa."}
-              </AlertDescription>
-            </Alert>
-
-            <div className="space-y-2">
-              <Label htmlFor="apiUrl">URL de la API</Label>
-              <Input 
-                id="apiUrl" 
-                value={newApiUrl}
-                onChange={(e) => setNewApiUrl(e.target.value)}
-                placeholder="http://localhost:3001/api"
-              />
-              <p className="text-sm text-muted-foreground">
-                Ejemplo: http://localhost:3001/api o http://192.168.1.100:3001/api
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <p className="text-sm">
-                Estado actual: {connectionStatus === 'checking' ? 'Verificando...' : 
-                               connectionStatus === 'connected' ? 'Conectado' : 'No conectado'}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Asegúrate de que el servidor Node.js esté en ejecución y sea accesible desde este dispositivo.
-              </p>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button onClick={() => testConnection()}>Probar Conexión</Button>
-            <Button onClick={saveApiUrl}>Guardar Configuración</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

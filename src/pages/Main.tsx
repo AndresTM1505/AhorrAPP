@@ -5,20 +5,14 @@ import { useTransactions } from '@/contexts/TransactionsContext';
 import SideMenu from '@/components/SideMenu';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CirclePlus, TrendingUp, TrendingDown, MessageCircleIcon, Edit, Trash, Settings } from 'lucide-react';
+import { CirclePlus, TrendingUp, TrendingDown, MessageCircleIcon, Edit, Trash } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 
 const Main = () => {
-  const { transactions, balance, incomeTotal, expenseTotal, deleteTransaction, fetchTransactions, isLoading, error, apiBaseUrl, setApiBaseUrl } = useTransactions();
+  const { transactions, balance, incomeTotal, expenseTotal, deleteTransaction, fetchTransactions, isLoading, error } = useTransactions();
   const { toast } = useToast();
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [newApiUrl, setNewApiUrl] = useState(apiBaseUrl);
-  const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'failed'>('checking');
   
   // Fetch transactions when component mounts
   useEffect(() => {
@@ -46,46 +40,6 @@ const Main = () => {
       description: "El movimiento ha sido eliminado correctamente."
     });
   };
-
-  // Function to test server connection
-  const testConnection = async () => {
-    setConnectionStatus('checking');
-    try {
-      const response = await fetch(`${newApiUrl}/transactions`);
-      if (response.ok) {
-        setConnectionStatus('connected');
-        return true;
-      } else {
-        setConnectionStatus('failed');
-        return false;
-      }
-    } catch (err) {
-      console.error('Connection test failed:', err);
-      setConnectionStatus('failed');
-      return false;
-    }
-  };
-
-  // Function to save API URL
-  const saveApiUrl = async () => {
-    const isConnected = await testConnection();
-    
-    if (isConnected) {
-      setApiBaseUrl(newApiUrl);
-      toast({
-        title: "Configuración guardada",
-        description: "La conexión al servidor se ha establecido correctamente."
-      });
-      setIsSettingsOpen(false);
-      fetchTransactions();
-    } else {
-      toast({
-        title: "Error de conexión",
-        description: "No se pudo conectar al servidor. Revise la URL y asegúrese de que el servidor esté en ejecución.",
-        variant: "destructive"
-      });
-    }
-  };
   
   const openWhatsApp = () => {
     // The WhatsApp number to send messages to
@@ -96,7 +50,7 @@ const Main = () => {
       "*NUEVO MOVIMIENTO* \n\n" +
       "Hola! Para registrar un nuevo movimiento, por favor completa los campos:\n\n" +
       "*Tipo*/" + "*Categoría/*" + "*Descripción/*" + "*Monto/*" + "*Fecha*\n\n" +
-      "Ej. Gasto, comida, bembos, 22.90, 4-2-25, 3pm\n\n" +
+      "Ej. Gasto, comida, bembos, 22.90, 4-2-25\n\n" +
       "Por favor, responde con toda la información completa. Una vez reciba tu mensaje, actualizaré la app con tu nuevo movimiento.\n\n" +
       "¡Gracias por usar AhorroAPP!"
     );
@@ -128,8 +82,14 @@ const Main = () => {
           <SideMenu />
           <h1 className="text-xl font-semibold">Inicio</h1>
         </div>
-        <Button variant="ghost" size="icon" onClick={() => setIsSettingsOpen(true)}>
-          <Settings className="h-5 w-5" />
+        <Button 
+          variant="outline"
+          className="flex items-center gap-1 text-green-500 border-green-500 hover:bg-green-100"
+          onClick={openWhatsApp}
+          size="sm"
+        >
+          <MessageCircleIcon className="h-4 w-4" />
+          WhatsApp
         </Button>
       </header>
 
@@ -237,50 +197,6 @@ const Main = () => {
           <CirclePlus className="h-6 w-6" />
         </Button>
       </Link>
-
-      {/* Server settings dialog */}
-      <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Configuración del Servidor</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <Alert variant={error ? "destructive" : "default"}>
-              <AlertDescription>
-                {error ? error : 
-                  "Configura la conexión al servidor de PostgreSQL. Si el servidor está en ejecución en otra máquina, debes proporcionar la dirección IP completa."}
-              </AlertDescription>
-            </Alert>
-
-            <div className="space-y-2">
-              <Label htmlFor="apiUrl">URL de la API</Label>
-              <Input 
-                id="apiUrl" 
-                value={newApiUrl}
-                onChange={(e) => setNewApiUrl(e.target.value)}
-                placeholder="http://localhost:3001/api"
-              />
-              <p className="text-sm text-muted-foreground">
-                Ejemplo: http://localhost:3001/api o http://192.168.1.100:3001/api
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <p className="text-sm">
-                Estado actual: {connectionStatus === 'checking' ? 'Verificando...' : 
-                               connectionStatus === 'connected' ? 'Conectado' : 'No conectado'}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Asegúrate de que el servidor Node.js esté en ejecución y sea accesible desde este dispositivo.
-              </p>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button onClick={() => testConnection()}>Probar Conexión</Button>
-            <Button onClick={saveApiUrl}>Guardar Configuración</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

@@ -165,33 +165,45 @@ app.delete('/api/transactions/:id', async (req, res) => {
   }
 });
 
-// WhatsApp webhook endpoint
+// WhatsApp webhook endpoint - This receives messages from the WhatsApp Business API
 app.post('/api/whatsapp-webhook', async (req, res) => {
   try {
     // Get the message content from the request body
     // This will depend on the actual structure of the webhook from your WhatsApp provider
     const messageText = req.body.message || '';
     
+    console.log('Received WhatsApp message:', messageText);
+    
     // Parse the message to extract transaction details
-    // Expected format: "Tipo/Categoría/Descripción/Monto/Fecha"
-    // Example: "Gasto, comida, bembos, 22.90, 4-2-25, 3pm"
+    // Expected format: "Tipo, Categoría, Descripción, Monto, Fecha"
+    // Example: "Gasto, comida, bembos, 22.90, 4-2-25"
     const messageParts = messageText.split(',').map(part => part.trim());
     
     if (messageParts.length < 5) {
-      return res.status(400).json({ error: 'Invalid message format' });
+      console.log('Invalid message format. Expected at least 5 parts.');
+      return res.status(400).json({ 
+        error: 'Invalid message format',
+        expected: 'Tipo, Categoría, Descripción, Monto, Fecha'
+      });
     }
     
     const type = messageParts[0] === 'Gasto' ? 'Gasto' : 'Ingreso';
     const category = messageParts[1];
     const description = messageParts[2];
     const amount = parseFloat(messageParts[3]);
-    const dateTimeParts = messageParts.slice(4).join(',').trim().split(',');
-    const date = dateTimeParts[0];
+    // Join the rest as date (in case it contains commas)
+    const date = messageParts.slice(4).join(',').trim();
     
     // Validate the extracted data
     if (!type || !category || !description || isNaN(amount) || !date) {
-      return res.status(400).json({ error: 'Invalid transaction data' });
+      console.log('Invalid transaction data:', { type, category, description, amount, date });
+      return res.status(400).json({ 
+        error: 'Invalid transaction data',
+        received: { type, category, description, amount, date }
+      });
     }
+    
+    console.log('Parsed transaction data:', { type, category, description, amount, date });
     
     // Add the transaction to database
     const absAmount = Math.abs(amount);
@@ -199,6 +211,8 @@ app.post('/api/whatsapp-webhook', async (req, res) => {
       'INSERT INTO transactions (description, amount, category, date, type, is_fixed) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
       [description, absAmount, category, date, type, false]
     );
+    
+    console.log('Transaction added successfully');
     
     // Format response as needed
     res.status(201).json({
@@ -228,4 +242,5 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Access the API at http://localhost:${PORT}/api`);
   console.log(`Health check endpoint: http://localhost:${PORT}/api/health`);
+  console.log(`WhatsApp webhook endpoint: http://localhost:${PORT}/api/whatsapp-webhook`);
 });
