@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 
 // Definition of the transaction type
@@ -26,6 +25,8 @@ interface TransactionsContextType {
   error: string | null;
   setApiBaseUrl: (url: string) => void;
   apiBaseUrl: string;
+  startPolling: () => void;
+  stopPolling: () => void;
 }
 
 // Storage key for fallback
@@ -87,11 +88,21 @@ export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ childr
   const [apiBaseUrl, setApiBaseUrl] = useState<string>(
     localStorage.getItem(API_URL_STORAGE_KEY) || DEFAULT_API_BASE_URL
   );
+  const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
   
   // Save API URL to localStorage when it changes
   useEffect(() => {
     localStorage.setItem(API_URL_STORAGE_KEY, apiBaseUrl);
   }, [apiBaseUrl]);
+
+  // Cleanup polling interval on unmount
+  useEffect(() => {
+    return () => {
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+      }
+    };
+  }, [pollingInterval]);
 
   // Function to load transactions from localStorage
   const loadFromLocalStorage = (): Transaction[] => {
@@ -103,8 +114,43 @@ export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ childr
         console.error('Error parsing saved transactions:', err);
       }
     }
-    // If no saved transactions or error parsing, return sample data
     return SAMPLE_TRANSACTIONS;
+  };
+
+  // Function to start polling for new transactions (used after WhatsApp message)
+  const startPolling = () => {
+    if (pollingInterval) {
+      clearInterval(pollingInterval);
+    }
+    
+    let attempts = 0;
+    console.log("Starting polling for new transactions...");
+    
+    // Do an immediate fetch
+    fetchTransactions();
+    
+    const interval = setInterval(() => {
+      attempts++;
+      console.log(`Polling for new transactions (attempt ${attempts})`);
+      fetchTransactions();
+      
+      if (attempts >= 12) {
+        clearInterval(interval);
+        setPollingInterval(null);
+        console.log("Polling stopped after 1 minute");
+      }
+    }, 5000);
+    
+    setPollingInterval(interval);
+  };
+  
+  // Function to stop polling
+  const stopPolling = () => {
+    if (pollingInterval) {
+      clearInterval(pollingInterval);
+      setPollingInterval(null);
+      console.log("Polling stopped manually");
+    }
   };
 
   // Function to fetch transactions from the API
@@ -115,9 +161,8 @@ export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ childr
     try {
       console.log(`Fetching transactions from: ${apiBaseUrl}/transactions`);
       
-      // Use the faster timeout for better UX
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000); // Reduced timeout to 3 seconds
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
       
       const response = await fetch(`${apiBaseUrl}/transactions`, {
         headers: {
@@ -137,15 +182,12 @@ export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ childr
       const data = await response.json();
       setTransactions(data);
       
-      // Also save to localStorage as fallback
       localStorage.setItem(TRANSACTIONS_STORAGE_KEY, JSON.stringify(data));
     } catch (err) {
       console.error('Error fetching transactions:', err);
       
-      // More user-friendly error message
       setError('Failed to load transactions. Using local data if available.');
       
-      // Fall back to localStorage if API call fails
       const localData = loadFromLocalStorage();
       setTransactions(localData);
     } finally {
@@ -156,9 +198,6 @@ export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ childr
   // Load transactions when component mounts - but with reduced polling frequency
   useEffect(() => {
     fetchTransactions();
-    
-    // No frequent polling to avoid error messages
-    // Only fetch once when component mounts
   }, []); // Removed apiBaseUrl dependency to prevent constant retries
   
   // Function to save transactions to localStorage
@@ -172,7 +211,6 @@ export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ childr
     setError(null);
     
     try {
-      // Ensure amount has the correct sign based on type
       const amount = transaction.type === 'Ingreso' 
         ? Math.abs(Number(transaction.amount)) 
         : -Math.abs(Number(transaction.amount));
@@ -202,16 +240,13 @@ export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ childr
       
       const newTransaction = await response.json();
       
-      // Update state with the new transaction
       setTransactions(prev => [newTransaction, ...prev]);
       
-      // Update localStorage backup
       saveToLocalStorage([newTransaction, ...transactions]);
     } catch (err) {
       console.error('Error adding transaction:', err);
       setError('Failed to add transaction. Using local data storage as fallback.');
       
-      // Fallback to local operation if API call fails
       const newId = Math.max(0, ...transactions.map(t => t.id)) + 1;
       const newTransaction: Transaction = {
         ...transaction,
@@ -235,7 +270,6 @@ export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ childr
     setError(null);
     
     try {
-      // Ensure amount has the correct sign
       const amount = updatedTransaction.type === 'Ingreso' 
         ? Math.abs(Number(updatedTransaction.amount)) 
         : -Math.abs(Number(updatedTransaction.amount));
@@ -265,7 +299,6 @@ export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ childr
       
       const result = await response.json();
       
-      // Update state
       const updatedTransactions = transactions.map(t => 
         t.id === updatedTransaction.id 
           ? { ...result } 
@@ -274,13 +307,11 @@ export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ childr
       
       setTransactions(updatedTransactions);
       
-      // Update localStorage backup
       saveToLocalStorage(updatedTransactions);
     } catch (err) {
       console.error('Error updating transaction:', err);
       setError('Failed to update transaction. Using local data storage as fallback.');
       
-      // Fallback to local operation
       const updatedAmount = updatedTransaction.type === 'Ingreso' 
         ? Math.abs(Number(updatedTransaction.amount)) 
         : -Math.abs(Number(updatedTransaction.amount));
@@ -325,17 +356,14 @@ export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ childr
         throw new Error(`Failed to delete transaction: ${response.status} ${response.statusText}`);
       }
       
-      // Update state
       const updatedTransactions = transactions.filter(t => t.id !== id);
       setTransactions(updatedTransactions);
       
-      // Update localStorage backup
       saveToLocalStorage(updatedTransactions);
     } catch (err) {
       console.error('Error deleting transaction:', err);
       setError('Failed to delete transaction. Using local data storage as fallback.');
       
-      // Fallback to local operation
       const updatedTransactions = transactions.filter(t => t.id !== id);
       setTransactions(updatedTransactions);
       saveToLocalStorage(updatedTransactions);
@@ -366,7 +394,9 @@ export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ childr
     isLoading,
     error,
     apiBaseUrl,
-    setApiBaseUrl
+    setApiBaseUrl,
+    startPolling,
+    stopPolling
   };
 
   return (

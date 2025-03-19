@@ -33,7 +33,7 @@ const Transactions = () => {
   const navigate = useNavigate();
   const { 
     transactions, deleteTransaction, updateTransaction, 
-    fetchTransactions, isLoading, error
+    fetchTransactions, isLoading, error, startPolling
   } = useTransactions();
   const { toast } = useToast();
   
@@ -150,20 +150,14 @@ const Transactions = () => {
     // Open WhatsApp with the predefined message
     window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
     
-    // After sending the message, show a notification to refresh
-    toast({
-      title: "Mensaje Enviado",
-      description: "Después de enviar el mensaje, regresa y actualiza la app para ver tus cambios."
-    });
+    // Start polling for new transactions
+    startPolling();
     
-    // Schedule a refresh in 30 seconds to check for new transactions
-    setTimeout(() => {
-      fetchTransactions();
-      toast({
-        title: "Actualización",
-        description: "Buscando nuevas transacciones..."
-      });
-    }, 30000);
+    // Show notification that we're looking for updates
+    toast({
+      title: "Buscando Actualizaciones",
+      description: "Estamos buscando nuevas transacciones. Por favor, espera un momento después de enviar tu mensaje de WhatsApp."
+    });
   };
   
   return (
@@ -272,6 +266,15 @@ const Transactions = () => {
             </Button>
           </div>
         )}
+        
+        {/* Add more prominent WhatsApp button at the top */}
+        <Button 
+          className="w-full flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white"
+          onClick={openWhatsApp}
+        >
+          <MessageCircleIcon className="h-5 w-5" />
+          Registrar movimiento por WhatsApp
+        </Button>
         
         {/* Show error banner if needed */}
         {error && (

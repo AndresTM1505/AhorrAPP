@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const Main = () => {
-  const { transactions, balance, incomeTotal, expenseTotal, deleteTransaction, fetchTransactions, isLoading, error } = useTransactions();
+  const { transactions, balance, incomeTotal, expenseTotal, deleteTransaction, fetchTransactions, isLoading, error, startPolling } = useTransactions();
   const { toast } = useToast();
   
   // Fetch transactions when component mounts
@@ -50,20 +50,14 @@ const Main = () => {
     // Open WhatsApp with the predefined message
     window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
     
-    // After sending the message, show a notification to refresh
-    toast({
-      title: "Mensaje Enviado",
-      description: "Después de enviar el mensaje, regresa y actualiza la app para ver tus cambios."
-    });
+    // Start polling for new transactions
+    startPolling();
     
-    // Schedule a refresh in 30 seconds to check for new transactions
-    setTimeout(() => {
-      fetchTransactions();
-      toast({
-        title: "Actualización",
-        description: "Buscando nuevas transacciones..."
-      });
-    }, 30000);
+    // Show notification that we're looking for updates
+    toast({
+      title: "Buscando Actualizaciones",
+      description: "Estamos buscando nuevas transacciones. Por favor, espera un momento después de enviar tu mensaje de WhatsApp."
+    });
   };
 
   return (
@@ -95,6 +89,15 @@ const Main = () => {
             </AlertDescription>
           </Alert>
         )}
+        
+        {/* WhatsApp Integration Button - Move this to the top for better visibility */}
+        <Button 
+          className="w-full flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600"
+          onClick={openWhatsApp}
+        >
+          <MessageCircleIcon className="h-5 w-5" />
+          Registrar gastos desde WhatsApp
+        </Button>
         
         {/* Total Balance */}
         <Card className="w-full bg-gradient-to-r from-primary/10 to-primary/5">
@@ -129,15 +132,6 @@ const Main = () => {
             </CardContent>
           </Card>
         </div>
-        
-        {/* WhatsApp Integration Button */}
-        <Button 
-          className="w-full flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600"
-          onClick={openWhatsApp}
-        >
-          <MessageCircleIcon className="h-5 w-5" />
-          Registrar gastos desde WhatsApp
-        </Button>
         
         {/* Recent Transactions */}
         <Card>

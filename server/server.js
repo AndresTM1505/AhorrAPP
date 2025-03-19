@@ -168,6 +168,8 @@ app.delete('/api/transactions/:id', async (req, res) => {
 // WhatsApp webhook endpoint - This receives messages from the WhatsApp Business API
 app.post('/api/whatsapp-webhook', async (req, res) => {
   try {
+    console.log('Received WhatsApp webhook payload:', req.body);
+    
     // Get the message content from the request body
     // This will depend on the actual structure of the webhook from your WhatsApp provider
     const messageText = req.body.message || '';
@@ -232,6 +234,48 @@ app.post('/api/whatsapp-webhook', async (req, res) => {
   }
 });
 
+// Add a direct endpoint for testing WhatsApp integration
+app.post('/api/whatsapp-test', async (req, res) => {
+  try {
+    console.log('Received WhatsApp test request:', req.body);
+    
+    const { type, category, description, amount, date } = req.body;
+    
+    // Validate the required fields
+    if (!type || !category || !description || !amount || !date) {
+      return res.status(400).json({ 
+        error: 'Missing required fields',
+        expected: { type, category, description, amount, date }
+      });
+    }
+    
+    // Add the transaction to database
+    const absAmount = Math.abs(Number(amount));
+    const result = await pool.query(
+      'INSERT INTO transactions (description, amount, category, date, type, is_fixed) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      [description, absAmount, type, date, type, false]
+    );
+    
+    console.log('Test transaction added successfully');
+    
+    // Format response as needed
+    res.status(201).json({
+      message: 'Test transaction added successfully',
+      transaction: {
+        id: result.rows[0].id,
+        description,
+        amount: type === 'Ingreso' ? absAmount : -absAmount,
+        category,
+        date,
+        type
+      }
+    });
+  } catch (error) {
+    console.error('Error processing test message:', error);
+    res.status(500).json({ error: 'Failed to process the test message' });
+  }
+});
+
 // Server status endpoint for connection testing
 app.get('/api/status', (req, res) => {
   res.json({ status: 'Server is running' });
@@ -243,4 +287,5 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Access the API at http://localhost:${PORT}/api`);
   console.log(`Health check endpoint: http://localhost:${PORT}/api/health`);
   console.log(`WhatsApp webhook endpoint: http://localhost:${PORT}/api/whatsapp-webhook`);
+  console.log(`WhatsApp test endpoint: http://localhost:${PORT}/api/whatsapp-test`);
 });
