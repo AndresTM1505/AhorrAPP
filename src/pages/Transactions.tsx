@@ -33,7 +33,7 @@ const Transactions = () => {
   const navigate = useNavigate();
   const { 
     transactions, deleteTransaction, updateTransaction, 
-    fetchTransactions, isLoading, error, startPolling
+    fetchTransactions, isLoading, error, startPolling, stopAutoRefresh
   } = useTransactions();
   const { toast } = useToast();
   
@@ -41,6 +41,8 @@ const Transactions = () => {
   const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
   const [filteredTransactions, setFilteredTransactions] = useState<any[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [tempSelectedDate, setTempSelectedDate] = useState<Date | undefined>(undefined);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   
   const [editedTransaction, setEditedTransaction] = useState({
     amount: '',
@@ -51,10 +53,12 @@ const Transactions = () => {
     isFixed: false
   });
   
-  // Fetch transactions when component mounts
+  // Fetch transactions when component mounts - only once, don't auto refresh
   useEffect(() => {
     fetchTransactions();
-  }, [fetchTransactions]);
+    // Disable auto refresh when component mounts
+    stopAutoRefresh();
+  }, [fetchTransactions, stopAutoRefresh]);
   
   // Apply date filter to transactions
   useEffect(() => {
@@ -75,8 +79,6 @@ const Transactions = () => {
       setFilteredTransactions([]);
     }
   }, [transactions, selectedDate]);
-  
-  // Don't show error toast, only display in UI
   
   const handleDelete = (id: number) => {
     deleteTransaction(id);
@@ -131,6 +133,7 @@ const Transactions = () => {
   
   const clearDateFilter = () => {
     setSelectedDate(undefined);
+    setTempSelectedDate(undefined);
   };
   
   const handleRefresh = () => {
@@ -139,6 +142,11 @@ const Transactions = () => {
       title: "Actualizando",
       description: "Buscando nuevos movimientos..."
     });
+  };
+  
+  const applyDateFilter = () => {
+    setSelectedDate(tempSelectedDate);
+    setIsCalendarOpen(false);
   };
   
   const openWhatsApp = () => {
@@ -178,10 +186,8 @@ const Transactions = () => {
         </div>
         
         <div className="flex items-center gap-2">
-          {/* WhatsApp Button - Removed from header */}
-          
           {/* Date Filter */}
-          <Popover>
+          <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
             <PopoverTrigger asChild>
               <Button 
                 variant="outline" 
@@ -195,8 +201,8 @@ const Transactions = () => {
             <PopoverContent className="w-auto p-0" align="end">
               <Calendar
                 mode="single"
-                selected={selectedDate}
-                onSelect={setSelectedDate}
+                selected={tempSelectedDate}
+                onSelect={setTempSelectedDate}
                 initialFocus
                 className="pointer-events-auto"
               />
@@ -212,7 +218,7 @@ const Transactions = () => {
                 <Button 
                   variant="default" 
                   size="sm" 
-                  onClick={() => {}}
+                  onClick={applyDateFilter}
                 >
                   Aplicar
                 </Button>
@@ -338,7 +344,6 @@ const Transactions = () => {
               <br />
               Ejemplo: Gasto, comida, bembos, 22.90, 4-2-25
             </div>
-            {/* Removed duplicate WhatsApp button here */}
           </div>
         </Card>
       </main>

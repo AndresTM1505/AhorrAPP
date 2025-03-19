@@ -11,13 +11,15 @@ import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const Main = () => {
-  const { transactions, balance, incomeTotal, expenseTotal, deleteTransaction, fetchTransactions, isLoading, error, startPolling } = useTransactions();
+  const { transactions, balance, incomeTotal, expenseTotal, deleteTransaction, fetchTransactions, isLoading, error, startPolling, stopAutoRefresh } = useTransactions();
   const { toast } = useToast();
   
-  // Fetch transactions when component mounts
+  // Fetch transactions when component mounts - only once, don't auto refresh
   useEffect(() => {
     fetchTransactions();
-  }, [fetchTransactions]);
+    // Disable auto refresh when component mounts
+    stopAutoRefresh();
+  }, [fetchTransactions, stopAutoRefresh]);
   
   // Explicitly don't show error toast from Main page to avoid redundant errors
   // The error UI will be shown below instead

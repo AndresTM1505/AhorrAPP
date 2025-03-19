@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 
 // Definition of the transaction type
@@ -27,6 +28,7 @@ interface TransactionsContextType {
   apiBaseUrl: string;
   startPolling: () => void;
   stopPolling: () => void;
+  stopAutoRefresh: () => void;
 }
 
 // Storage key for fallback
@@ -89,6 +91,7 @@ export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ childr
     localStorage.getItem(API_URL_STORAGE_KEY) || DEFAULT_API_BASE_URL
   );
   const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
+  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState<boolean>(true);
   
   // Save API URL to localStorage when it changes
   useEffect(() => {
@@ -152,6 +155,15 @@ export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ childr
       console.log("Polling stopped manually");
     }
   };
+  
+  // Function to stop auto-refresh
+  const stopAutoRefresh = () => {
+    setAutoRefreshEnabled(false);
+    console.log("Auto-refresh disabled");
+    
+    // Also stop any active polling
+    stopPolling();
+  };
 
   // Function to fetch transactions from the API
   const fetchTransactions = async () => {
@@ -195,10 +207,12 @@ export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ childr
     }
   };
   
-  // Load transactions when component mounts - but with reduced polling frequency
+  // Only load transactions once when component mounts
+  // No automatic refreshes or polling - only manual refresh through buttons
   useEffect(() => {
+    // Initial fetch on mount
     fetchTransactions();
-  }, []); // Removed apiBaseUrl dependency to prevent constant retries
+  }, []); 
   
   // Function to save transactions to localStorage
   const saveToLocalStorage = (updatedTransactions: Transaction[]) => {
@@ -396,7 +410,8 @@ export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ childr
     apiBaseUrl,
     setApiBaseUrl,
     startPolling,
-    stopPolling
+    stopPolling,
+    stopAutoRefresh
   };
 
   return (
