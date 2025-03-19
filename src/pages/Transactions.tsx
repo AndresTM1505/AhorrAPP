@@ -133,6 +133,14 @@ const Transactions = () => {
     setSelectedDate(undefined);
   };
   
+  const handleRefresh = () => {
+    fetchTransactions();
+    toast({
+      title: "Actualizando",
+      description: "Buscando nuevos movimientos..."
+    });
+  };
+  
   const openWhatsApp = () => {
     // The WhatsApp number to send messages to
     const phoneNumber = "+34603831258";
@@ -170,16 +178,7 @@ const Transactions = () => {
         </div>
         
         <div className="flex items-center gap-2">
-          {/* WhatsApp Button */}
-          <Button 
-            variant="outline"
-            className="flex items-center gap-1 text-green-500 border-green-500 hover:bg-green-100"
-            onClick={openWhatsApp}
-            size="sm"
-          >
-            <MessageCircleIcon className="h-4 w-4" />
-            WhatsApp
-          </Button>
+          {/* WhatsApp Button - Removed from header */}
           
           {/* Date Filter */}
           <Popover>
@@ -225,7 +224,7 @@ const Transactions = () => {
           <Button 
             variant="outline" 
             size="sm" 
-            onClick={() => fetchTransactions()} 
+            onClick={handleRefresh} 
             className="flex items-center gap-1"
           >
             <svg 
@@ -267,7 +266,7 @@ const Transactions = () => {
           </div>
         )}
         
-        {/* Add more prominent WhatsApp button at the top */}
+        {/* Single WhatsApp button at the top */}
         <Button 
           className="w-full flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white"
           onClick={openWhatsApp}
@@ -326,7 +325,7 @@ const Transactions = () => {
           </div>
         )}
         
-        {/* Show a WhatsApp explanation card at the bottom */}
+        {/* Simplified WhatsApp explanation card */}
         <Card className="p-4 mt-8 bg-green-50 border-green-200">
           <div className="flex flex-col items-center text-center space-y-3">
             <MessageCircleIcon className="h-10 w-10 text-green-500" />
@@ -339,13 +338,7 @@ const Transactions = () => {
               <br />
               Ejemplo: Gasto, comida, bembos, 22.90, 4-2-25
             </div>
-            <Button 
-              className="bg-green-500 hover:bg-green-600 text-white w-full mt-3"
-              onClick={openWhatsApp}
-            >
-              <MessageCircleIcon className="h-5 w-5 mr-2" />
-              Enviar mensaje de WhatsApp
-            </Button>
+            {/* Removed duplicate WhatsApp button here */}
           </div>
         </Card>
       </main>

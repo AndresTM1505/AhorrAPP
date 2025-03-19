@@ -33,6 +33,14 @@ const Main = () => {
     });
   };
   
+  const handleRefresh = () => {
+    fetchTransactions();
+    toast({
+      title: "Actualizando",
+      description: "Buscando nuevos movimientos..."
+    });
+  };
+  
   const openWhatsApp = () => {
     // The WhatsApp number to send messages to
     const phoneNumber = "+34603831258";
@@ -69,13 +77,27 @@ const Main = () => {
           <h1 className="text-xl font-semibold">Inicio</h1>
         </div>
         <Button 
-          variant="outline"
-          className="flex items-center gap-1 text-green-500 border-green-500 hover:bg-green-100"
-          onClick={openWhatsApp}
-          size="sm"
+          variant="outline" 
+          size="sm" 
+          onClick={handleRefresh} 
+          className="flex items-center gap-1"
         >
-          <MessageCircleIcon className="h-4 w-4" />
-          WhatsApp
+          <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            width="16" 
+            height="16" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="2" 
+            strokeLinecap="round" 
+            strokeLinejoin="round" 
+            className="h-4 w-4"
+          >
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+            <path d="M3 3v5h5"/>
+          </svg>
+          Actualizar
         </Button>
       </header>
 
@@ -90,7 +112,7 @@ const Main = () => {
           </Alert>
         )}
         
-        {/* WhatsApp Integration Button - Move this to the top for better visibility */}
+        {/* WhatsApp Integration Button - Only one button now */}
         <Button 
           className="w-full flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600"
           onClick={openWhatsApp}
@@ -190,7 +212,7 @@ const Main = () => {
           <Button
             variant="outline"
             className="w-full"
-            onClick={() => fetchTransactions()}
+            onClick={handleRefresh}
           >
             <svg 
               xmlns="http://www.w3.org/2000/svg" 
