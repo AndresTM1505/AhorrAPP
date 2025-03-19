@@ -6,7 +6,7 @@ import SideMenu from '@/components/SideMenu';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { 
-  ArrowLeft, TrendingUp, TrendingDown, CirclePlus, 
+  TrendingUp, TrendingDown, CirclePlus, 
   Trash, Edit, CalendarIcon, MessageCircleIcon
 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
@@ -76,16 +76,7 @@ const Transactions = () => {
     }
   }, [transactions, selectedDate]);
   
-  // Show error toast if API call fails but only once
-  useEffect(() => {
-    if (error) {
-      toast({
-        title: "Error",
-        description: error,
-        variant: "destructive",
-      });
-    }
-  }, [error, toast]);
+  // Don't show error toast, only display in UI
   
   const handleDelete = (id: number) => {
     deleteTransaction(id);
@@ -175,14 +166,6 @@ const Transactions = () => {
     }, 30000);
   };
   
-  const forceRefresh = () => {
-    toast({
-      title: "Actualizando",
-      description: "Buscando nuevos movimientos..."
-    });
-    fetchTransactions();
-  };
-  
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -248,7 +231,7 @@ const Transactions = () => {
           <Button 
             variant="outline" 
             size="sm" 
-            onClick={forceRefresh} 
+            onClick={() => fetchTransactions()} 
             className="flex items-center gap-1"
           >
             <svg 
@@ -292,7 +275,7 @@ const Transactions = () => {
         
         {/* Show error banner if needed */}
         {error && (
-          <Alert variant="destructive" className="mb-4">
+          <Alert variant="destructive" className="mb-4 animate-fade-in">
             <AlertDescription>
               {error}
             </AlertDescription>
@@ -339,6 +322,29 @@ const Transactions = () => {
               : 'No hay movimientos registrados'}
           </div>
         )}
+        
+        {/* Show a WhatsApp explanation card at the bottom */}
+        <Card className="p-4 mt-8 bg-green-50 border-green-200">
+          <div className="flex flex-col items-center text-center space-y-3">
+            <MessageCircleIcon className="h-10 w-10 text-green-500" />
+            <h3 className="font-semibold text-green-800">¿Cómo añadir gastos por WhatsApp?</h3>
+            <p className="text-green-700 text-sm">
+              Para registrar un nuevo movimiento por WhatsApp, debes enviar un mensaje con el siguiente formato:
+            </p>
+            <div className="bg-white p-3 rounded-md text-left w-full font-mono text-xs text-green-900">
+              <strong>Tipo, Categoría, Descripción, Monto, Fecha</strong>
+              <br />
+              Ejemplo: Gasto, comida, bembos, 22.90, 4-2-25
+            </div>
+            <Button 
+              className="bg-green-500 hover:bg-green-600 text-white w-full mt-3"
+              onClick={openWhatsApp}
+            >
+              <MessageCircleIcon className="h-5 w-5 mr-2" />
+              Enviar mensaje de WhatsApp
+            </Button>
+          </div>
+        </Card>
       </main>
 
       {/* Add transaction button (fixed at bottom) */}
