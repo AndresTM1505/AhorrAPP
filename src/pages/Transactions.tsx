@@ -53,12 +53,11 @@ const Transactions = () => {
     isFixed: false
   });
   
-  // Fetch transactions when component mounts - only once, don't auto refresh
+  // Only disable auto refresh when component mounts - NO AUTOMATIC FETCHING
   useEffect(() => {
-    fetchTransactions();
-    // Disable auto refresh when component mounts
     stopAutoRefresh();
-  }, [fetchTransactions, stopAutoRefresh]);
+    console.log('Transactions page loaded - auto refresh disabled');
+  }, [stopAutoRefresh]);
   
   // Apply date filter to transactions
   useEffect(() => {
@@ -137,6 +136,7 @@ const Transactions = () => {
   };
   
   const handleRefresh = () => {
+    console.log('Manual refresh requested from Transactions page');
     fetchTransactions();
     toast({
       title: "Actualizando",
@@ -231,6 +231,7 @@ const Transactions = () => {
             variant="outline" 
             size="sm" 
             onClick={handleRefresh} 
+            disabled={isLoading}
             className="flex items-center gap-1"
           >
             <svg 
@@ -248,7 +249,7 @@ const Transactions = () => {
               <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
               <path d="M3 3v5h5"/>
             </svg>
-            Actualizar
+            {isLoading ? 'Actualizando...' : 'Actualizar'}
           </Button>
         </div>
       </header>
