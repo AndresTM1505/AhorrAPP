@@ -85,9 +85,7 @@ export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ childr
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [apiBaseUrl, setApiBaseUrl] = useState<string>(
-    localStorage.getItem(API_URL_STORAGE_KEY) || DEFAULT_API_BASE_URL
-  );
+  const [apiBaseUrl, setApiBaseUrl] = useState<string>(DEFAULT_API_BASE_URL);
   const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
   
   // Save API URL to localStorage when it changes
