@@ -34,9 +34,8 @@ interface TransactionsContextType {
 const TRANSACTIONS_STORAGE_KEY = 'ahorrapp_transactions';
 const API_URL_STORAGE_KEY = 'ahorrapp_api_url';
 
-// Default API Base URL with Lovable-friendly value
-// Instead of localhost which doesn't work in Lovable's environment
-const DEFAULT_API_BASE_URL = 'https://mocked-api.example.com/api';
+// Default API Base URL - using localhost for local development
+const DEFAULT_API_BASE_URL = 'http://localhost:3001/api';
 
 // Create the context
 const TransactionsContext = createContext<TransactionsContextType | undefined>(undefined);
@@ -105,7 +104,7 @@ export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ childr
     };
   }, [pollingInterval]);
 
-  // Load initial data only once from localStorage
+  // Load initial data only once from localStorage - NO AUTO FETCHING
   useEffect(() => {
     const loadInitialData = () => {
       const savedTransactions = localStorage.getItem(TRANSACTIONS_STORAGE_KEY);
@@ -165,7 +164,7 @@ export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ childr
   
   // Function to stop auto-refresh (no-op now since we don't auto-refresh)
   const stopAutoRefresh = () => {
-    console.log("Auto-refresh already disabled - no automatic updates");
+    console.log("Auto-refresh disabled - no automatic updates");
     stopPolling();
   };
 
@@ -178,7 +177,7 @@ export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ childr
       console.log(`Fetching transactions from: ${apiBaseUrl}/transactions`);
       
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
       
       const response = await fetch(`${apiBaseUrl}/transactions`, {
         headers: {
@@ -200,10 +199,17 @@ export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ childr
       
       localStorage.setItem(TRANSACTIONS_STORAGE_KEY, JSON.stringify(data));
       console.log('Transactions updated from API');
+      
+      // Clear error if successful
+      setError(null);
     } catch (err) {
       console.error('Error fetching transactions:', err);
       
-      setError('Failed to load transactions. Using local data if available.');
+      const errorMessage = err instanceof Error && err.name === 'AbortError' 
+        ? 'Request timeout. Please check if the server is running.'
+        : 'Failed to load transactions. Using local data if available.';
+      
+      setError(errorMessage);
       
       // Keep existing transactions, don't reload from localStorage during error
       console.log('Keeping existing transactions due to API error');
@@ -230,7 +236,7 @@ export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ childr
       console.log(`Adding transaction to: ${apiBaseUrl}/transactions`);
       
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
       
       const response = await fetch(`${apiBaseUrl}/transactions`, {
         method: 'POST',
@@ -289,7 +295,7 @@ export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ childr
       console.log(`Updating transaction at: ${apiBaseUrl}/transactions/${updatedTransaction.id}`);
       
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
       
       const response = await fetch(`${apiBaseUrl}/transactions/${updatedTransaction.id}`, {
         method: 'PUT',
@@ -355,7 +361,7 @@ export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ childr
       console.log(`Deleting transaction at: ${apiBaseUrl}/transactions/${id}`);
       
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
       
       const response = await fetch(`${apiBaseUrl}/transactions/${id}`, {
         method: 'DELETE',
@@ -418,3 +424,5 @@ export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ childr
     </TransactionsContext.Provider>
   );
 };
+
+export default TransactionsProvider;
