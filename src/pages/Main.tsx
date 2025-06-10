@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTransactions } from '@/contexts/TransactionsContext';
@@ -14,15 +13,11 @@ const Main = () => {
   const { transactions, balance, incomeTotal, expenseTotal, deleteTransaction, fetchTransactions, isLoading, error, startPolling, stopAutoRefresh } = useTransactions();
   const { toast } = useToast();
   
-  // Fetch transactions when component mounts - only once, don't auto refresh
+  // Only disable auto refresh when component mounts - NO AUTOMATIC FETCHING
   useEffect(() => {
-    fetchTransactions();
-    // Disable auto refresh when component mounts
     stopAutoRefresh();
-  }, [fetchTransactions, stopAutoRefresh]);
-  
-  // Explicitly don't show error toast from Main page to avoid redundant errors
-  // The error UI will be shown below instead
+    console.log('Main page loaded - auto refresh disabled');
+  }, [stopAutoRefresh]);
   
   // Get the 3 most recent transactions
   const recentTransactions = transactions.slice(0, 3);
@@ -36,6 +31,7 @@ const Main = () => {
   };
   
   const handleRefresh = () => {
+    console.log('Manual refresh requested from Main page');
     fetchTransactions();
     toast({
       title: "Actualizando",
@@ -82,6 +78,7 @@ const Main = () => {
           variant="outline" 
           size="sm" 
           onClick={handleRefresh} 
+          disabled={isLoading}
           className="flex items-center gap-1"
         >
           <svg 
@@ -99,7 +96,7 @@ const Main = () => {
             <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
             <path d="M3 3v5h5"/>
           </svg>
-          Actualizar
+          {isLoading ? 'Actualizando...' : 'Actualizar'}
         </Button>
       </header>
 
@@ -107,14 +104,14 @@ const Main = () => {
       <main className="p-4 space-y-6">
         {/* Error Banner */}
         {error && (
-          <Alert variant="destructive" className="mb-4 animate-fade-in">
+          <Alert variant="destructive" className="mb-4">
             <AlertDescription>
               {error}
             </AlertDescription>
           </Alert>
         )}
         
-        {/* WhatsApp Integration Button - Only one button now */}
+        {/* WhatsApp Integration Button */}
         <Button 
           className="w-full flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600"
           onClick={openWhatsApp}
@@ -215,6 +212,7 @@ const Main = () => {
             variant="outline"
             className="w-full"
             onClick={handleRefresh}
+            disabled={isLoading}
           >
             <svg 
               xmlns="http://www.w3.org/2000/svg" 
@@ -231,7 +229,7 @@ const Main = () => {
               <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
               <path d="M3 3v5h5"/>
             </svg>
-            Actualizar Datos
+            {isLoading ? 'Actualizando Datos...' : 'Actualizar Datos'}
           </Button>
         )}
       </main>

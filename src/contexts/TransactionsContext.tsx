@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 
 // Definition of the transaction type
@@ -91,7 +90,6 @@ export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ childr
     localStorage.getItem(API_URL_STORAGE_KEY) || DEFAULT_API_BASE_URL
   );
   const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
-  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState<boolean>(true);
   
   // Save API URL to localStorage when it changes
   useEffect(() => {
@@ -107,18 +105,27 @@ export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ childr
     };
   }, [pollingInterval]);
 
-  // Function to load transactions from localStorage
-  const loadFromLocalStorage = (): Transaction[] => {
-    const savedTransactions = localStorage.getItem(TRANSACTIONS_STORAGE_KEY);
-    if (savedTransactions) {
-      try {
-        return JSON.parse(savedTransactions);
-      } catch (err) {
-        console.error('Error parsing saved transactions:', err);
+  // Load initial data only once from localStorage
+  useEffect(() => {
+    const loadInitialData = () => {
+      const savedTransactions = localStorage.getItem(TRANSACTIONS_STORAGE_KEY);
+      if (savedTransactions) {
+        try {
+          const parsedTransactions = JSON.parse(savedTransactions);
+          setTransactions(parsedTransactions);
+          console.log('Loaded transactions from localStorage');
+        } catch (err) {
+          console.error('Error parsing saved transactions:', err);
+          setTransactions(SAMPLE_TRANSACTIONS);
+        }
+      } else {
+        setTransactions(SAMPLE_TRANSACTIONS);
+        console.log('Loaded sample transactions');
       }
-    }
-    return SAMPLE_TRANSACTIONS;
-  };
+    };
+    
+    loadInitialData();
+  }, []); // Only run once on mount
 
   // Function to start polling for new transactions (used after WhatsApp message)
   const startPolling = () => {
@@ -156,16 +163,13 @@ export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ childr
     }
   };
   
-  // Function to stop auto-refresh
+  // Function to stop auto-refresh (no-op now since we don't auto-refresh)
   const stopAutoRefresh = () => {
-    setAutoRefreshEnabled(false);
-    console.log("Auto-refresh disabled");
-    
-    // Also stop any active polling
+    console.log("Auto-refresh already disabled - no automatic updates");
     stopPolling();
   };
 
-  // Function to fetch transactions from the API
+  // Function to fetch transactions from the API - ONLY WHEN MANUALLY CALLED
   const fetchTransactions = async () => {
     setIsLoading(true);
     setError(null);
@@ -195,24 +199,18 @@ export const TransactionsProvider: React.FC<{ children: ReactNode }> = ({ childr
       setTransactions(data);
       
       localStorage.setItem(TRANSACTIONS_STORAGE_KEY, JSON.stringify(data));
+      console.log('Transactions updated from API');
     } catch (err) {
       console.error('Error fetching transactions:', err);
       
       setError('Failed to load transactions. Using local data if available.');
       
-      const localData = loadFromLocalStorage();
-      setTransactions(localData);
+      // Keep existing transactions, don't reload from localStorage during error
+      console.log('Keeping existing transactions due to API error');
     } finally {
       setIsLoading(false);
     }
   };
-  
-  // Only load transactions once when component mounts
-  // No automatic refreshes or polling - only manual refresh through buttons
-  useEffect(() => {
-    // Initial fetch on mount
-    fetchTransactions();
-  }, []); 
   
   // Function to save transactions to localStorage
   const saveToLocalStorage = (updatedTransactions: Transaction[]) => {
